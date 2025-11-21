@@ -1,0 +1,17 @@
+# Ignore dependencies
+node_modules/
+venv/
+__pycache__/
+
+# Ignore build artifacts
+dist/
+*.log
+
+# Ignore environment secrets 
+.env
+backend/.env
+.DS_Store
+backend/venv/
+
+# Local AlloyDB Auth Proxy binary
+alloydb-auth-proxy

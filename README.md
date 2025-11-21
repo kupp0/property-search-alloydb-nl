@@ -1,0 +1,172 @@
+# AlloyDB AI Search Demo
+
+This project is a full-stack demonstration of how to build a modern, AI-powered search application using Google Cloud's **AlloyDB for PostgreSQL**, **Vertex AI** & **Vertex AI Search**.
+
+It showcases four distinct search methodologies enabled by moving AI logic closer to your data, allowing users to interact with a property listing database in intuitive and powerful ways.
+
+## Features: The 4 Modes of Search
+
+| Mode | User Intent | Technology Stack | How it Works |
+| :--- | :--- | :--- | :--- |
+| **NL2SQL (Generative SQL)** | "I have specific, complex criteria." | **AlloyDB AI** (`alloydb_ai_nl` extension) | Converts natural language queries (e.g., "3-bed in Geneva under 6k") directly into a precise SQL `WHERE` clause inside the database. |
+| **Semantic Search** | "I'm searching by concept or vibe." | **AlloyDB** (`pgvector`) + **Vertex AI** (Text Embeddings) | Converts user query into a vector, finding property descriptions with the closest semantic meaning, matching concepts over keywords. |
+| **Visual Search** | "I know the look I want." | **AlloyDB** (`pgvector`) + **Vertex AI** (Multimodal Embeddings) | Converts user text into a "visual vector" and searches against vectors generated from property images, finding aesthetic matches. |
+| **Managed Search** | "I want Google-quality search." | **Vertex AI Search** (Agent Builder) | A fully managed "Search as a Service" that ingests data and provides a pre-tuned API with ranking, typo-tolerance, and hybrid search out-of-the-box. |
+
+## Architecture Overview
+
+This application follows a modern, containerized microservices architecture designed for scalability and security.
+
+### System Components
+1.  **Frontend (React + Vite)**: Serves the user interface and communicates with the backend via REST API.
+2.  **Backend (FastAPI)**: Handles application logic, orchestrates AI services, and connects to the database.
+3.  **AlloyDB Auth Proxy**: A sidecar process that manages secure, encrypted connections to AlloyDB, eliminating the need for handling static database credentials.
+4.  **AlloyDB for PostgreSQL**: The primary relational database, enhanced with `pgvector` for semantic search and `alloydb_ai_nl` for natural language to SQL translation.
+5.  **Vertex AI**: Provides the AI models for embeddings (text & multimodal) and the fully managed search engine.
+
+```mermaid
+graph TD
+    User[User Browser] -->|HTTPS| FE[Frontend (React)]
+    FE -->|REST API| BE[Backend (FastAPI)]
+    
+    subgraph Cloud Run Service
+        BE
+        Proxy[AlloyDB Auth Proxy]
+    end
+    
+    BE -->|Localhost:5432| Proxy
+    Proxy -->|Secure Tunnel| DB[(AlloyDB Primary)]
+    
+    BE -->|API| Vertex[Vertex AI]
+    
+    subgraph Google Cloud
+        DB
+        Vertex
+    end
+```
+
+### User Interface
+The interface is designed to be intuitive, offering four distinct search modes to cater to different user needs.
+
+![AlloyDB AI Search UI](assets/ui_screenshot.png)
+
+## Technical Architecture
+* **Frontend:** React + Vite (Containerized with Nginx)
+* **Backend:** FastAPI (Containerized with Python 3.11)
+* **Database:** AlloyDB for PostgreSQL (with `alloydb_ai_nl` and `vector` extensions)
+* **AI Services:** Vertex AI (Embeddings, Multimodal, Search)
+
+## Getting Started
+
+### Prerequisites
+
+#### Tools
+* **Google Cloud SDK (`gcloud`)**: Installed and authenticated.
+* **Docker**: Installed (for local debugging and building).
+* **Git**: For version control.
+
+#### IAM Permissions
+To successfully deploy and run this application, specific IAM roles are required for both the **User (Deployer)** and the **Cloud Run Service Account**.
+
+**1. User (Deployer) Permissions:**
+You need these permissions to build images and deploy services:
+* `roles/owner` OR `roles/editor` (Broad access)
+* OR specifically:
+    * `roles/artifactregistry.writer` (To push Docker images)
+    * `roles/run.admin` (To deploy Cloud Run services)
+    * `roles/iam.serviceAccountUser` (To act as the service account)
+
+**2. Cloud Run Service Account Permissions:**
+The identity running the Cloud Run service (default is the Compute Engine default service account) needs:
+* `roles/alloydb.client`: To connect to AlloyDB.
+* `roles/discoveryengine.editor`: To query Vertex AI Search.
+* `roles/logging.logWriter`: To write logs to Cloud Logging.
+* `roles/serviceusage.serviceUsageConsumer`: To consume Google Cloud APIs.
+* `roles/aiplatform.user`: To use Vertex AI Embeddings (if applicable).
+
+### Connectivity & AlloyDB Auth Proxy
+This application uses the **AlloyDB Auth Proxy** pattern to securely connect to the database.
+
+#### Default: Public IP
+By default, this repository is configured to connect via **Public IP**.
+* **Requirement**: Your AlloyDB Instance must have "Public IP" enabled.
+* **Configuration**: The `backend/service.yaml` (and `debug_local.sh`) uses the `--public-ip` flag in the Auth Proxy sidecar arguments.
+
+#### Private IP (VPC Peering / Serverless VPC Access)
+If your AlloyDB instance is on a private VPC and does **not** have a public IP:
+1. **Remove the `--public-ip` flag**: Edit `backend/service.yaml` and `debug_local.sh` to remove this argument.
+2. **VPC Connectivity**: Ensure your Cloud Run service is connected to the VPC:
+    * **Direct VPC Egress** (Recommended): Configure the Cloud Run service to use Direct VPC Egress to the VPC containing AlloyDB.
+    *   **Serverless VPC Access Connector**: Alternatively, use a connector.
+3. **Private Service Connect**: If using PSC, ensure the endpoint is reachable.
+
+### Database & AI Setup
+
+#### 1. AlloyDB Setup
+You must provision an AlloyDB for PostgreSQL instance and run the provided initialization scripts to create the schema and enable extensions.
+
+1.  **Create AlloyDB Cluster & Instance**: Ensure it is in the same region as your Cloud Run services.
+2.  **Run SQL Scripts**: Connect to your instance (e.g., via AlloyDB Studio or `psql` through the proxy) and execute the scripts in `alloydb artefacts/`:
+    *   `alloydb_setup.sql`: Creates the `search` schema, tables, and enables `pgvector`.
+    *   `alloydb_ai_nl_setup.sql`: Configures the `alloydb_ai_nl` extension for Natural Language to SQL.
+
+#### 2. Visual Search Setup (Optional)
+To enable Visual Search, you need to populate the database with images and embeddings. We provide a bootstrap script for this.
+
+1.  **Prerequisites**:
+    *   A Google Cloud Storage bucket to store generated images.
+    *   Vertex AI Vision API enabled.
+2.  **Run the Bootstrap Script**:
+    This script generates AI images for each listing, uploads them to GCS, calculates embeddings, and updates the database.
+    ```bash
+    # Install dependencies
+    pip install -r alloydb\ artefacts/requirements.txt
+    
+    # Run the script (Ensure Auth Proxy is running locally!)
+    python alloydb\ artefacts/bootstrap_images.py
+    ```
+    *Note: This script assumes the AlloyDB Auth Proxy is running on `localhost:5432`.*
+
+#### 3. Vertex AI Search Setup
+For the "Managed Search" mode, you must set up a Vertex AI Search app.
+
+1.  **Enable API**: Enable "Vertex AI Search and Conversation API".
+2.  **Create App**: Create a new "Search" app in "Generic" mode.
+3.  **Create Data Store**:
+    *   Source: **AlloyDB for PostgreSQL** (Preview).
+    *   Select your AlloyDB table (`search.property_listings`).
+    *   **IMPORTANT**: Ensure all columns (title, description, price, city, etc.) are set to **Retrievable** and **Searchable** in the schema mapping configuration.
+4.  **Link Data Store**: Connect the data store to your Search App.
+5.  **Update Config**: Set the `VERTEX_SEARCH_DATA_STORE_ID` environment variable in `backend/service.yaml` and `.env` to your Data Store ID.
+
+### Local Debugging (Containerized)
+To run the application locally in Docker containers (mimicking the Cloud Run environment):
+
+```bash
+./debug_local.sh
+```
+This will:
+1. Download and start the **AlloyDB Auth Proxy** locally (using your gcloud credentials).
+2. Build and run the **Backend container** (connected to the proxy).
+3. Build and run the **Frontend container** (connected to the backend).
+4. Access the app at `http://localhost:8081`.
+
+### Deployment to Cloud Run
+To deploy the full stack to Google Cloud Run:
+
+```bash
+./deploy.sh
+```
+This script will:
+1. Check for necessary IAM permissions.
+2. Build Docker images and push them to Artifact Registry.
+3. Deploy the **Backend service** (with AlloyDB Auth Proxy sidecar).
+4. Deploy the **Frontend service** (configured to talk to the Backend).
+5. Output the public URLs for both services.
+
+## Repository Structure
+* `backend/`: FastAPI application and Dockerfile.
+* `frontend/`: React application and Dockerfile.
+* `deploy.sh`: Automated deployment script for Cloud Run.
+* `debug_local.sh`: Script for local containerized debugging.
+* `alloydb artefacts/`: SQL scripts for database setup.
