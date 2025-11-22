@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { Sparkles, X, Search, MapPin, Bed, Database, BrainCircuit, Eye, Loader2, Image as ImageIcon, CloudLightning } from 'lucide-react';
+import SearchExamples from './components/SearchExamples';
 
 const formatCurrency = (number) => {
     return new Intl.NumberFormat('en-US', {
@@ -34,7 +35,7 @@ const ListingCard = ({ listing }) => {
     };
 
     return (
-        <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden hover:shadow-md transition-shadow flex flex-col animate-in fade-in duration-500">
+        <div className="bg-white/80 backdrop-blur-md rounded-2xl shadow-sm border border-white/40 overflow-hidden hover:shadow-xl hover:-translate-y-1 transition-all duration-300 flex flex-col group">
             <div className="h-48 bg-slate-100 relative overflow-hidden group">
                 {imageUrl ? (
                     <img src={imageUrl} alt="Property" className="w-full h-full object-cover hover:scale-105 transition-transform duration-700" />
@@ -111,9 +112,14 @@ function App() {
     };
 
     return (
-        <div className="min-h-screen bg-slate-50 p-4 sm:p-8 font-sans text-slate-800 flex flex-col items-center">
-            <div className="w-full max-w-5xl mx-auto mt-8">
-                <div className="bg-white rounded-xl shadow-xl overflow-hidden">
+        <div className="min-h-screen bg-gradient-to-br from-slate-50 via-indigo-50/50 to-slate-100 selection:bg-indigo-100 selection:text-indigo-700 p-4 sm:p-8 font-sans text-slate-800 flex flex-col items-center relative overflow-x-hidden">
+            <div className="fixed inset-0 pointer-events-none">
+                <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] bg-indigo-200/30 rounded-full blur-[120px] mix-blend-multiply animate-blob"></div>
+                <div className="absolute top-[-10%] right-[-10%] w-[40%] h-[40%] bg-purple-200/30 rounded-full blur-[120px] mix-blend-multiply animate-blob animation-delay-2000"></div>
+                <div className="absolute bottom-[-20%] left-[20%] w-[40%] h-[40%] bg-pink-200/30 rounded-full blur-[120px] mix-blend-multiply animate-blob animation-delay-4000"></div>
+            </div>
+            <div className="w-full max-w-5xl mx-auto mt-8 relative z-10">
+                <div className="bg-white/70 backdrop-blur-xl rounded-3xl shadow-2xl border border-white/50 overflow-hidden ring-1 ring-black/5">
                     {/* Header Line */}
                     <div className={`h-2 transition-colors duration-300 ${mode === 'vertex_search' ? 'bg-orange-500' : mode === 'nl2sql' ? 'bg-teal-500' : mode === 'semantic' ? 'bg-indigo-500' : 'bg-purple-500'}`}></div>
                     
@@ -122,7 +128,7 @@ function App() {
                             <h2 className="text-2xl font-bold text-slate-900 whitespace-nowrap">Property Search <span className="text-xs font-normal text-slate-400 border border-slate-200 px-2 py-0.5 rounded-full ml-2">BETA</span></h2>
                             
                             {/* --- 4-WAY TOGGLE --- */}
-                            <div className="flex bg-slate-100 p-1 rounded-lg overflow-x-auto max-w-full">
+                            <div className="flex bg-slate-100/50 backdrop-blur-sm border border-slate-200/50 p-1.5 rounded-xl overflow-x-auto max-w-full shadow-inner">
                                 <button onClick={() => setMode('nl2sql')} className={`px-3 py-1.5 rounded-md text-sm font-semibold flex items-center whitespace-nowrap transition-all ${mode === 'nl2sql' ? 'bg-white text-teal-600 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}>
                                     <BrainCircuit className="w-4 h-4 mr-2" /> AlloyDB NL
                                 </button>
@@ -144,6 +150,8 @@ function App() {
                             {mode === 'visual' && "Builder Mode: Search by visual aesthetics (pixels)."}
                             {mode === 'vertex_search' && "Managed Mode: Fully managed 'Black Box' search service (Agent Builder)."}
                         </p>
+
+                        <SearchExamples currentQuery={query} onSelectQuery={setQuery} />
 
                         <div className="relative group mb-6">
                             <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
