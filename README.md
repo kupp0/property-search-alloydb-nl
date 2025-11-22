@@ -29,7 +29,7 @@ graph TD
     User[User Browser] -->|HTTPS| FE[Frontend (React)]
     FE -->|REST API| BE[Backend (FastAPI)]
     
-    subgraph Cloud Run Service
+    subgraph "Cloud Run Service"
         BE
         Proxy[AlloyDB Auth Proxy]
     end
@@ -39,7 +39,7 @@ graph TD
     
     BE -->|API| Vertex[Vertex AI]
     
-    subgraph Google Cloud
+    subgraph "Google Cloud"
         DB
         Vertex
     end
