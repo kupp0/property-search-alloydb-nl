@@ -13,7 +13,7 @@ spec:
       serviceAccountName: 88191992087-compute@developer.gserviceaccount.com
       containers:
       - name: backend
-        image: europe-west1-docker.pkg.dev/kupczak-1132-20251020115736/search-app-repo/search-backend:20251124-110615
+        image: europe-west1-docker.pkg.dev/kupczak-1132-20251020115736/search-app-repo/search-backend:20251124-145131
         ports:
         - containerPort: 8080
         env:

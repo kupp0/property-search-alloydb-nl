@@ -9,6 +9,8 @@ Combined Setup & Hardening Script
 3. CONCEPTS:    Mapping columns to real-world types.
 4. TEMPLATES:   The "Grammar" (Single Master Template).
 5. FRAGMENTS:   The "Vocabulary" (Business Rules & Filters).
+
+
 ===================================================================================
 */
 
@@ -79,7 +81,7 @@ SELECT alloydb_ai_nl.refresh_value_index(nl_config_id_in => 'property_search_con
 -- ===================================================================================
 -- ACTIVE TEMPLATE: The "Natural" Master Template
 -- This allows Fragments (Where clauses) and Concepts (City names) to work alongside Vector Search.
-
+/*
 SELECT alloydb_ai_nl.add_template(
   nl_config_id => 'property_search_config',
   intent => 'modern apartment in Zurich',
@@ -91,6 +93,29 @@ SELECT alloydb_ai_nl.add_template(
     -- and "modern" (Vibe) goes to Embedding.
     WHERE 1=1 AND city = 'Zurich'
     ORDER BY description_embedding <=> embedding('gemini-embedding-001', 'modern')::vector
+    LIMIT 10
+  $$,
+  check_intent => TRUE
+);
+*/
+SELECT description_embedding <=> embedding('gemini-embedding-001', 'modern')::vector FROM
+search.property_listings
+WHERE 
+(description_embedding <=> embedding('gemini-embedding-001', 'modern')::vector)  > 0.5
+
+
+SELECT alloydb_ai_nl.add_template(
+  nl_config_id => 'property_search_config',
+  intent => 'modern apartment in Zurich',
+  sql => $$
+    SELECT image_gcs_uri, id, title, description, bedrooms, price, city
+    FROM search.property_listings
+    -- THE INSTRUCTION:
+    -- We show the AI that "Zurich" (Concept) goes to WHERE
+    -- and "modern" (Vibe) goes to Embedding.
+    WHERE 1=1 AND city = 'Zurich'
+  AND (description_embedding <=> embedding('gemini-embedding-001', 'modern')::vector)  > 0.1
+  --  ORDER BY description_embedding <=> embedding('gemini-embedding-001', 'modern')::vector
     LIMIT 10
   $$,
   check_intent => TRUE
@@ -172,7 +197,7 @@ SELECT alloydb_ai_nl.add_fragment(
 SELECT alloydb_ai_nl.add_fragment(
     nl_config_id  => 'property_search_config',
     table_aliases => ARRAY['search.property_listings'],
-    intent        => 'family',
+    intent        => 'family appartment',
     fragment      => 'bedrooms >= 3'
 );
 
@@ -202,7 +227,7 @@ FROM alloydb_ai_nl.template_store_view
 WHERE config = 'property_search_config';
 
 -- List active fragments
-SELECT intent, fragment 
+SELECT *, intent, fragment 
 FROM alloydb_ai_nl.fragment_store_view 
 WHERE config = 'property_search_config';
 
@@ -213,5 +238,9 @@ SELECT alloydb_ai_nl.get_sql(
     'Show me cheap family apartments in Zurich not ground floor'
 ) ->> 'sql';
 
--- NOTE: Assuming "cheap" refers to the lowest price. 
-SELECT "title", "description", "price" FROM "search"."property_listings" WHERE "city" = 'Zurich' -- Filter for apartments in Zurich AND "bedrooms" >= 2 -- Filter for family apartments (assuming >= 2 bedrooms) ORDER BY "price" ASC NULLS LAST LIMIT 10; -- Limit to the top 10 cheapest
+-- Test Query
+-- Expected: Filters for City='Zurich', Price<=2500, Beds>=3, Description NOT Ground floor
+SELECT alloydb_ai_nl.get_sql(
+    'property_search_config',
+    'Show me family apartments in Zurich with a nice view up to 6k'
+) ->> 'sql';

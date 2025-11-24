@@ -94,7 +94,6 @@ def get_db_connection():
     Establishes a connection to the AlloyDB instance via the local Auth Proxy.
     """
     try:
-        # print(f"Connecting to DB {os.getenv('DB_NAME')} as {os.getenv('DB_USER')}...")
         return psycopg2.connect(
             dbname=os.getenv("DB_NAME", "postgres"),
             user=os.getenv("DB_USER", "postgres"),
@@ -242,7 +241,6 @@ async def search_properties(request: SearchRequest):
                 final_sql += " LIMIT 20"
             
             display_sql = final_sql
-            # print(f"Executing NL2SQL: {final_sql}")
             cursor.execute(final_sql)
             
             if cursor.description:
