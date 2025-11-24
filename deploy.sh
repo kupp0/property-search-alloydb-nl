@@ -12,8 +12,18 @@ else
     exit 1
 fi
 
-PROJECT_ID=${GCP_PROJECT_ID:-$(gcloud config get-value project)}
-REGION=${GCP_LOCATION:-"europe-west1"}
+PROJECT_ID=${GCP_PROJECT_ID}
+REGION=${GCP_LOCATION}
+
+if [ -z "$PROJECT_ID" ]; then
+    echo "❌ GCP_PROJECT_ID not found in backend/.env"
+    exit 1
+fi
+
+if [ -z "$REGION" ]; then
+    echo "❌ GCP_LOCATION not found in backend/.env"
+    exit 1
+fi
 BACKEND_SERVICE_NAME="search-backend"
 FRONTEND_SERVICE_NAME="search-frontend"
 
@@ -123,15 +133,7 @@ check_service_account_permissions
 # Sometimes createOnPush fails even with permissions due to propagation delays.
 # It's safer to ensure the repo exists explicitly.
 echo "🔍 Checking/Creating Artifact Registry repository..."
-# gcr.io repositories are actually hosted in Artifact Registry now for new projects.
-# We'll try to create it if it doesn't exist.
-# Note: 'gcr.io' is a special multi-region location.
-# However, for Cloud Build to push to gcr.io/$PROJECT_ID, the underlying repo must exist.
-# We can try to enable the API and let it handle it, or just rely on the user having repoAdmin.
-# If the user has repoAdmin, we can try to run a command to create it, but gcr.io is legacy-mapped.
-
-# Alternative: Use a standard Artifact Registry repo instead of gcr.io to avoid this legacy mess.
-# Let's switch to a modern Artifact Registry repo in the user's region.
+# Use a standard Artifact Registry repo in the user's region.
 REPO_NAME="search-app-repo"
 REPO_URI="$REGION-docker.pkg.dev/$PROJECT_ID/$REPO_NAME"
 
@@ -146,9 +148,11 @@ else
     echo "✅ Repository '$REPO_NAME' already exists."
 fi
 
-# Update Image URIs to use the new Artifact Registry
-BACKEND_IMAGE="$REPO_URI/$BACKEND_SERVICE_NAME"
-FRONTEND_IMAGE="$REPO_URI/$FRONTEND_SERVICE_NAME"
+# Update Image URIs to use the new Artifact Registry with a unique tag
+TAG=$(date +%Y%m%d-%H%M%S)
+echo "🏷️  Using Image Tag: $TAG"
+BACKEND_IMAGE="$REPO_URI/$BACKEND_SERVICE_NAME:$TAG"
+FRONTEND_IMAGE="$REPO_URI/$FRONTEND_SERVICE_NAME:$TAG"
 
 
 # 1. Build and Push Backend Image
@@ -157,8 +161,6 @@ gcloud builds submit backend --tag $BACKEND_IMAGE
 
 # 2. Deploy Backend with AlloyDB Auth Proxy Sidecar
 echo "🚀 Deploying Backend..."
-# Get current service account
-# SERVICE_ACCOUNT=$(gcloud config get-value account) # This is the USER account, not valid for Cloud Run runtime
 # We should use the Default Compute Service Account for the runtime identity
 PROJECT_NUMBER=$(gcloud projects describe $PROJECT_ID --format="value(projectNumber)")
 SERVICE_ACCOUNT="${PROJECT_NUMBER}-compute@developer.gserviceaccount.com"

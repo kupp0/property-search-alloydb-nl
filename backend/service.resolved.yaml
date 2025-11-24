@@ -1,0 +1,48 @@
+apiVersion: serving.knative.dev/v1
+kind: Service
+metadata:
+  name: search-backend
+  annotations:
+    run.googleapis.com/launch-stage: BETA
+spec:
+  template:
+    metadata:
+      annotations:
+        run.googleapis.com/execution-environment: gen2
+    spec:
+      serviceAccountName: 88191992087-compute@developer.gserviceaccount.com
+      containers:
+      - name: backend
+        image: europe-west1-docker.pkg.dev/kupczak-1132-20251020115736/search-app-repo/search-backend:20251124-110615
+        ports:
+        - containerPort: 8080
+        env:
+        - name: GCP_PROJECT_ID
+          value: "kupczak-1132-20251020115736"
+        - name: GCP_LOCATION
+          value: "europe-west1"
+
+        - name: INSTANCE_CONNECTION_NAME
+          value: "projects/kupczak-1132-20251020115736/locations/europe-west1/clusters/hr-dev/instances/hr-primary"
+        - name: VERTEX_SEARCH_DATA_STORE_ID
+          value: "alloydb-property_1763410579360"
+        - name: PYTHONUNBUFFERED
+          value: "1"
+        - name: DB_USER
+          value: "postgres"
+        - name: DB_NAME
+          value: "postgres"
+        - name: DB_PASSWORD
+          value: "Welcome01"
+      - name: auth-proxy
+        image: gcr.io/alloydb-connectors/alloydb-auth-proxy:latest
+        args:
+        - "projects/kupczak-1132-20251020115736/locations/europe-west1/clusters/hr-dev/instances/hr-primary"
+        - "--address=127.0.0.1"
+        - "--port=5432"
+        - "--public-ip"
+        # - "--credential-file=/secrets/key.json" # If using specific credentials
+        resources:
+          limits:
+            cpu: "1000m"
+            memory: "512Mi"

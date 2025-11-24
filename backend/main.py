@@ -42,16 +42,17 @@ search_client = None
 
 try:
     PROJECT_ID = os.getenv("GCP_PROJECT_ID") or os.environ.get("GOOGLE_CLOUD_PROJECT")
-    LOCATION = os.getenv("GCP_LOCATION", "europe-west1")
+    LOCATION = os.getenv("GCP_LOCATION")
 
-    # Add a hard failure if Project ID is not found. This is the most common startup error.
+    # Add a hard failure if Project ID or Location is not found.
     if not PROJECT_ID:
         raise ValueError("GCP_PROJECT_ID not found. Please ensure it is set in your backend/.env file.")
+    if not LOCATION:
+        raise ValueError("GCP_LOCATION not found. Please ensure it is set in your backend/.env file.")
 
     # --- EXPLICIT CREDENTIALS HANDLING ---
-    # This is the key fix. On a GCE VM, the SDK defaults to the VM's service account.
-    # We must explicitly load the user's "Application Default Credentials" (ADC)
-    # to override this and use the permissions of the logged-in user.
+    # Explicitly load the user's "Application Default Credentials" (ADC)
+    # to override the default service account and use the permissions of the logged-in user.
     credentials, _ = google.auth.default(
         scopes=['https://www.googleapis.com/auth/cloud-platform']
     )
@@ -62,7 +63,6 @@ try:
     
     # 2. Load Models
     print("Initializing models...")
-    # Removed ImageGenerationModel
     mm_model = MultiModalEmbeddingModel.from_pretrained("multimodalembedding") # image embeddings
     gemini_text_model = TextEmbeddingModel.from_pretrained("gemini-embedding-001") # text embeddings
     print("Models initialized successfully.")
@@ -83,7 +83,7 @@ class SearchRequest(BaseModel):
     query: str
     mode: str = "nl2sql"  # Options: 'nl2sql', 'semantic', 'visual', 'vertex_search'
 
-# Removed ImageRequest class
+
 
 # ==============================================================================
 # DATABASE HELPERS
@@ -249,12 +249,34 @@ async def search_properties(request: SearchRequest):
                 columns = [desc[0] for desc in cursor.description]
                 results = [dict(zip(columns, row)) for row in cursor.fetchall()]
 
+            if not results:
+                cursor.execute('SELECT DISTINCT city FROM "search".property_listings ORDER BY city')
+                cities = [row[0] for row in cursor.fetchall()]
+                display_sql = 'SELECT DISTINCT city FROM "search".property_listings ORDER BY city'
+                return {"listings": [], "sql": display_sql, "available_cities": cities}
+
 
         return {"listings": results, "sql": display_sql}
 
     except psycopg2.Error as e:
         print(f"Database Error: {e.pgcode} - {e.pgerror}")
-        return {"listings": [], "sql": f"Database Error: {e.pgerror}"}
+        cities = []
+        fallback_conn = None
+        try:
+            # Use a fresh connection to avoid transaction state issues
+            fallback_conn = get_db_connection()
+            fallback_cursor = fallback_conn.cursor()
+            fallback_cursor.execute('SELECT DISTINCT city FROM "search".property_listings ORDER BY city')
+            cities = [row[0] for row in fallback_cursor.fetchall()]
+            fallback_cursor.close()
+            fallback_conn.close()
+        except Exception as city_err:
+            print(f"Failed to fetch cities during error handling: {city_err}")
+            if fallback_conn:
+                try: fallback_conn.close()
+                except: pass
+            
+        return {"listings": [], "sql": f"Database Error: {e.pgerror}", "available_cities": cities}
     except Exception as e:
         print(f"Backend Error: {e}")
         return {"listings": [], "sql": f"Backend Error: {str(e)}"}
@@ -268,5 +290,3 @@ async def search_properties(request: SearchRequest):
         # Ensure connection is closed even if an error occurs
         if cursor: cursor.close()
         if conn: conn.close()
-
-# Removed /api/generate-image endpoint

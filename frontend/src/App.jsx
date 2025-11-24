@@ -78,25 +78,29 @@ function App() {
     const [isLoading, setIsLoading] = useState(false);
     const [error, setError] = useState(null);
     const [generatedSql, setGeneratedSql] = useState('');
+    const [availableCities, setAvailableCities] = useState([]);
     const [mode, setMode] = useState('nl2sql'); 
 
-    const handleSearch = async () => {
-        if (!query.trim()) return;
+    const handleSearch = async (queryOverride) => {
+        const searchQuery = typeof queryOverride === 'string' ? queryOverride : query;
+        if (!searchQuery.trim()) return;
         setIsLoading(true);
         setError(null);
         setResults([]);
         setGeneratedSql('');
+        setAvailableCities([]);
 
         try {
             const response = await fetch('/api/search', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ query, mode }),
+                body: JSON.stringify({ query: searchQuery, mode }),
             });
             const data = await response.json();
             if (!response.ok) throw new Error(data.detail || 'Search failed');
             setResults(data.listings || []);
             setGeneratedSql(data.sql || '');
+            setAvailableCities(data.available_cities || []);
         } catch (err) {
             setError(err.message);
         } finally {
@@ -177,6 +181,31 @@ function App() {
                             <div className="bg-slate-800 px-4 py-2 text-xs font-mono font-bold text-slate-400">System Output</div>
                             <div className="p-4 overflow-x-auto bg-slate-950 text-green-400 font-mono text-sm whitespace-pre-wrap leading-relaxed">{generatedSql}</div>
                         </div>
+                    </div>
+                )}
+
+                {results.length === 0 && generatedSql && !isLoading && (
+                    <div className="text-center py-12 bg-white/50 backdrop-blur-sm rounded-2xl border border-slate-200 shadow-sm mb-8">
+                        <div className="text-slate-500 mb-4 text-lg">No properties found matching your criteria.Try to search in Cities from below:</div>
+                        {availableCities.length > 0 && (
+                            <div className="text-sm text-slate-400">
+                                <p className="mb-2 font-semibold uppercase tracking-wider text-xs">RESULT</p>
+                                <div className="flex flex-wrap justify-center gap-2 max-w-2xl mx-auto px-4">
+                                    {availableCities.map(city => (
+                                        <button
+                                            key={city}
+                                            onClick={() => {
+                                                setQuery(city);
+                                                handleSearch(city);
+                                            }}
+                                            className="bg-white px-3 py-1 rounded-full border border-slate-200 shadow-sm text-slate-600 hover:bg-indigo-50 hover:text-indigo-600 hover:border-indigo-200 transition-all cursor-pointer"
+                                        >
+                                            {city}
+                                        </button>
+                                    ))}
+                                </div>
+                            </div>
+                        )}
                     </div>
                 )}
 
