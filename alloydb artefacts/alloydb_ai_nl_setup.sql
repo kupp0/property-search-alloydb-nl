@@ -9,8 +9,6 @@ Combined Setup & Hardening Script
 3. CONCEPTS:    Mapping columns to real-world types.
 4. TEMPLATES:   The "Grammar" (Single Master Template).
 5. FRAGMENTS:   The "Vocabulary" (Business Rules & Filters).
-
-
 ===================================================================================
 */
 
@@ -22,7 +20,12 @@ SET search_path TO "search", public;
 CREATE EXTENSION IF NOT EXISTS alloydb_ai_nl CASCADE;
 ALTER EXTENSION alloydb_ai_nl UPDATE;
 
--- Create the configuration holder
+-- Check version
+SELECT name, default_version, installed_version
+FROM pg_available_extensions
+WHERE installed_version IS NOT NULL;
+
+-- Create the configuration
 SELECT alloydb_ai_nl.g_create_configuration('property_search_config');
 
 
@@ -77,85 +80,64 @@ SELECT alloydb_ai_nl.create_value_index(nl_config_id_in => 'property_search_conf
 SELECT alloydb_ai_nl.refresh_value_index(nl_config_id_in => 'property_search_config');
 
 
--- 3. QUERY TEMPLATES (The "Master" Logic)
+-- #################################################################
+-- ########################## QUERY TEMPLATES ######################
+-- #################################################################
 -- ===================================================================================
--- ACTIVE TEMPLATE: The "Natural" Master Template
--- This allows Fragments (Where clauses) and Concepts (City names) to work alongside Vector Search.
-/*
+
+-- Check Auto generation based on query history: 
+-- SELECT alloydb_ai_nl.generate_templates('property_search_config');
+
+
+-- ### 1 ### With semantic intent in the search query
 SELECT alloydb_ai_nl.add_template(
-  nl_config_id => 'property_search_config',
-  intent => 'modern apartment in Zurich',
-  sql => $$
-    SELECT image_gcs_uri, id, title, description, bedrooms, price, city
-    FROM search.property_listings
-    -- THE INSTRUCTION:
-    -- We show the AI that "Zurich" (Concept) goes to WHERE
-    -- and "modern" (Vibe) goes to Embedding.
-    WHERE 1=1 AND city = 'Zurich'
-    ORDER BY description_embedding <=> embedding('gemini-embedding-001', 'modern')::vector
-    LIMIT 10
-  $$,
-  check_intent => TRUE
-);
-*/
-SELECT description_embedding <=> embedding('gemini-embedding-001', 'modern')::vector FROM
-search.property_listings
-WHERE 
-(description_embedding <=> embedding('gemini-embedding-001', 'modern')::vector)  > 0.5
+    nl_config_id => 'property_search_config',
+    intent       => 'Show me modern appartments in Zurich with industrial look up to 6k with min 2 rooms',
+    sql          => $$
+        SELECT image_gcs_uri, id, title, description, bedrooms, price, city
+        FROM search.property_listings
+        WHERE "city" = 'Zurich'          -- Filter by city
+          AND "price" <= 6000            -- Filter by price up to 6000
+          AND "bedrooms" >= 2            -- Filter by min 2 rooms 
+        ORDER BY -- weighted similarity score
+          ((0.6 * (1 - ("description_embedding" <=> embedding('gemini-embedding-001', 'modern appartments with industrial look')::vector))) + 
+           (0.4 * (1 - ("image_embedding" <=> ai.text_embedding(model_id => 'multimodalembedding@001', content => 'modern appartments with industrial look')::vector))))
+        DESC
+        LIMIT 20
+    $$,
+    check_intent => TRUE
+); 
 
-
+-- ### 2 ### Only where predicates
 SELECT alloydb_ai_nl.add_template(
-  nl_config_id => 'property_search_config',
-  intent => 'modern apartment in Zurich',
-  sql => $$
-    SELECT image_gcs_uri, id, title, description, bedrooms, price, city
-    FROM search.property_listings
-    -- THE INSTRUCTION:
-    -- We show the AI that "Zurich" (Concept) goes to WHERE
-    -- and "modern" (Vibe) goes to Embedding.
-    WHERE 1=1 AND city = 'Zurich'
-  AND (description_embedding <=> embedding('gemini-embedding-001', 'modern')::vector)  > 0.1
-  --  ORDER BY description_embedding <=> embedding('gemini-embedding-001', 'modern')::vector
-    LIMIT 10
-  $$,
-  check_intent => TRUE
-);
+    nl_config_id => 'property_search_config',
+    intent       => 'Show me appartments in Zurich up to 6k with min 2 rooms',
+    sql          => $$
+        SELECT image_gcs_uri, id, title, description, bedrooms, price, city
+        FROM search.property_listings
+        WHERE "city" = 'Zurich'          -- Filter by city
+          AND "price" <= 6000            -- Filter by price up to 6000
+          AND "bedrooms" >= 2            -- Filter by min 2 rooms 
+        LIMIT 20
+    $$,
+    check_intent => TRUE
+); 
 
-
-/*
--- LEGACY / ALTERNATIVE TEMPLATES
--- These are commented out to prevent "Template Hijacking"
-
--- 1. The "Greedy" Parameterized Template (AVOID - Eats city names into vector search)
+-- ### 3 ### Only semantic search
 SELECT alloydb_ai_nl.add_template(
-  nl_config_id => 'property_search_config',
-  intent => 'close to water',
-  sql => $$ ... $$,
-  parameterized_intent => '$1', -- This was the greedy part
-  parameterized_sql => $$ ... $$
-);
-
--- 2. Simple Semantic Search (Redundant with Master Template)
-SELECT alloydb_ai_nl.add_template(
-  nl_config_id => 'property_search_config',
-  intent => 'Find properties like "a quiet place to study"',
-  sql => $$ ... $$
-);
-
--- 3. Exact Attribute Search (Too specific, prevents fragments)
-SELECT alloydb_ai_nl.add_template(
-  nl_config_id => 'property_search_config',
-  intent => 'Are there any 3-bedroom places in Geneva?',
-  sql => $$ ... $$
-);
-
--- 4. Parameterized Sorting (Too rigid, prevents "Family" or "Ground Floor" logic)
-SELECT alloydb_ai_nl.add_template(
-  nl_config_id => 'property_search_config',
-  intent => 'Show me the cheapest apartments in Geneva',
-  sql => $$ ... $$
-);
-*/
+    nl_config_id => 'property_search_config',
+    intent       => 'Lovely wodden cabin',
+    sql          => $$
+        SELECT image_gcs_uri, id, title, description, bedrooms, price, city
+        FROM search.property_listings
+        ORDER BY -- weighted similarity score
+          ((0.6 * (1 - ("description_embedding" <=> embedding('gemini-embedding-001', 'Lovely wooden cabin')::vector))) + 
+           (0.4 * (1 - ("image_embedding" <=> ai.text_embedding(model_id => 'multimodalembedding@001', content => 'Lovely wooden cabbin')::vector))))
+        DESC
+        LIMIT 20
+    $$,
+    check_intent => TRUE
+); 
 
 
 -- 4. BUSINESS LOGIC FRAGMENTS
@@ -236,11 +218,4 @@ WHERE config = 'property_search_config';
 SELECT alloydb_ai_nl.get_sql(
     'property_search_config',
     'Show me cheap family apartments in Zurich not ground floor'
-) ->> 'sql';
-
--- Test Query
--- Expected: Filters for City='Zurich', Price<=2500, Beds>=3, Description NOT Ground floor
-SELECT alloydb_ai_nl.get_sql(
-    'property_search_config',
-    'Show me family apartments in Zurich with a nice view up to 6k'
 ) ->> 'sql';
