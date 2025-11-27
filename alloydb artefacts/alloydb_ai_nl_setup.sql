@@ -45,6 +45,7 @@ SELECT alloydb_ai_nl.generate_schema_context(
     TRUE -- Overwrite existing
 );
 
+/*
 -- [TUNING] Fix Case Sensitivity for Cities
 SELECT alloydb_ai_nl.update_generated_column_context(
     'search.property_listings.city',
@@ -57,9 +58,10 @@ SELECT alloydb_ai_nl.update_generated_column_context(
     'Contains details like pools, balconies, or views. Prefer using vector search / ordering for these features rather than strict WHERE clauses to avoid empty results.'
 );
 
+
 -- APPLY the tuned context to the active configuration
 SELECT alloydb_ai_nl.apply_generated_schema_context('property_search_config');
-
+*/
 
 -- 2. CONCEPT TYPES & VALUE INDEXING
 -- ===================================================================================
@@ -96,7 +98,7 @@ SELECT alloydb_ai_nl.add_template(
     sql          => $$
         SELECT image_gcs_uri, id, title, description, bedrooms, price, city
         FROM search.property_listings
-        WHERE "city" = 'Zurich'          -- Filter by city
+        WHERE LOWER("city") = LOWER('Zurich')          -- Filter by city
           AND "price" <= 6000            -- Filter by price up to 6000
           AND "bedrooms" >= 2            -- Filter by min 2 rooms 
         ORDER BY -- weighted similarity score
@@ -115,7 +117,7 @@ SELECT alloydb_ai_nl.add_template(
     sql          => $$
         SELECT image_gcs_uri, id, title, description, bedrooms, price, city
         FROM search.property_listings
-        WHERE "city" = 'Zurich'          -- Filter by city
+        WHERE LOWER("city") = LOWER('Zurich')          -- Filter by city
           AND "price" <= 6000            -- Filter by price up to 6000
           AND "bedrooms" >= 2            -- Filter by min 2 rooms 
         LIMIT 20
