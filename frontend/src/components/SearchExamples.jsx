@@ -6,14 +6,14 @@ const EXAMPLES = [
     {
         id: 'hybrid',
         label: 'Hybrid Search',
-        query: "Show me family apartments in Zurich with a nice view up to 6k",
+        query: "Show me family apartments in Zurich with a nice view up to 16k",
         title: 'The "All-in-One" Hybrid Search',
         what: 'The "Master Template" working perfectly.',
         why: [
             { label: 'Family', desc: 'Triggers Fragment (bedrooms >= 3).' },
             { label: 'Zurich', desc: "Recognized as City Concept (city = 'Zurich')." },
-            { label: 'up to 6k', desc: 'Triggers (price >= 6000).' },
-            { label: 'Nice view', desc: 'Remaining text sent to Vector Search (ORDER BY embedding...).' }
+            { label: 'up to 16k', desc: 'Triggers (price <= 16000).' },
+            { label: 'Nice view', desc: 'Semantic search across text embeddings and image embeddings. Text weighted 60% + Image 40%.' }
         ]
     },
     {

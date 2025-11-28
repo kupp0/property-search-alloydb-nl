@@ -7,8 +7,10 @@ from google.cloud import storage
 from dotenv import load_dotenv
 
 # Find and load the .env file from the backend directory
-backend_dir = os.path.dirname(os.path.abspath(__file__))
-dotenv_path = os.path.join(backend_dir, '.env')
+# Script is in "alloydb artefacts/", .env is in "backend/" (sibling directories)
+current_dir = os.path.dirname(os.path.abspath(__file__))
+project_root = os.path.dirname(current_dir)
+dotenv_path = os.path.join(project_root, 'backend', '.env')
 print(f"Loading environment from: {dotenv_path}")
 load_dotenv(dotenv_path=dotenv_path)
 

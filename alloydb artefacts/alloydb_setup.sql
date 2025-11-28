@@ -89,7 +89,7 @@ CREATE TABLE "search".property_listings (
 
 -- 4. SAMPLE DATA INSERTION
 -- ===================================================================================
--- Embeddings for 'description' are generated automatically upon insertion.
+-- Embeddings for 'description' are generated automatically upon insertion. Use Gemini to customize the sample data to your cities and add more samples if you like.
 -- Image URIs and Image Embeddings are left NULL here (populated in the Python step).
 
 INSERT INTO "search".property_listings (title, description, price, bedrooms, city) VALUES

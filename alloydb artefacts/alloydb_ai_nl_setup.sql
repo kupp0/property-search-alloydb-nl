@@ -45,13 +45,6 @@ SELECT alloydb_ai_nl.generate_schema_context(
     TRUE -- Overwrite existing
 );
 
-/*
--- [TUNING] Fix Case Sensitivity for Cities
-SELECT alloydb_ai_nl.update_generated_column_context(
-    'search.property_listings.city',
-    'The city name stored in Title Case (e.g. Zurich, Geneva). When filtering by city, ALWAYS convert input to Title Case or use the ILIKE operator to ignore case.'
-);
-
 -- [TUNING] Fix Empty Results for Amenities
 SELECT alloydb_ai_nl.update_generated_column_context(
     'search.property_listings.description',
@@ -61,7 +54,6 @@ SELECT alloydb_ai_nl.update_generated_column_context(
 
 -- APPLY the tuned context to the active configuration
 SELECT alloydb_ai_nl.apply_generated_schema_context('property_search_config');
-*/
 
 -- 2. CONCEPT TYPES & VALUE INDEXING
 -- ===================================================================================
@@ -127,7 +119,7 @@ SELECT alloydb_ai_nl.add_template(
 -- ### 3 ### Only semantic search
 SELECT alloydb_ai_nl.add_template(
     nl_config_id => 'property_search_config',
-    intent       => 'Lovely wodden cabin',
+    intent       => 'Lovely wooden cabin',
     sql          => $$
         SELECT image_gcs_uri, id, title, description, bedrooms, price, city
         FROM search.property_listings

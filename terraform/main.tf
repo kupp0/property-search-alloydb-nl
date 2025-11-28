@@ -1,0 +1,66 @@
+terraform {
+  required_providers {
+    google = {
+      source  = "hashicorp/google"
+      version = ">= 5.0"
+    }
+  }
+}
+
+provider "google" {
+  region = var.region
+}
+
+# Project Creation
+resource "google_project" "project" {
+  name            = var.project_id
+  project_id      = var.project_id
+  billing_account = var.billing_account_id
+  # folder_id       = "..." # Optional: Add if needed
+}
+
+# Enable Services
+resource "google_project_service" "services" {
+  for_each = toset([
+    "alloydb.googleapis.com",
+    "compute.googleapis.com",
+    "run.googleapis.com",
+    "artifactregistry.googleapis.com",
+    "cloudbuild.googleapis.com",
+    "aiplatform.googleapis.com",
+    "discoveryengine.googleapis.com",
+    "servicenetworking.googleapis.com",
+    "cloudresourcemanager.googleapis.com",
+    "iam.googleapis.com"
+  ])
+
+  project = google_project.project.project_id
+  service = each.key
+
+  disable_on_destroy = false
+}
+
+# VPC Network
+resource "google_compute_network" "vpc_network" {
+  name                    = "search-demo-vpc"
+  project                 = google_project.project.project_id
+  auto_create_subnetworks = true
+  depends_on              = [google_project_service.services]
+}
+
+# Private Service Access for AlloyDB
+resource "google_compute_global_address" "private_ip_address" {
+  name          = "alloydb-private-ip"
+  purpose       = "VPC_PEERING"
+  address_type  = "INTERNAL"
+  prefix_length = 16
+  network       = google_compute_network.vpc_network.id
+  project       = google_project.project.project_id
+}
+
+resource "google_service_networking_connection" "private_vpc_connection" {
+  network                 = google_compute_network.vpc_network.id
+  service                 = "servicenetworking.googleapis.com"
+  reserved_peering_ranges = [google_compute_global_address.private_ip_address.name]
+  depends_on              = [google_project_service.services]
+}

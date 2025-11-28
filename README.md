@@ -150,17 +150,18 @@ For the "Managed Search" mode, you must set up a Vertex AI Search app.
 4.  **Link Data Store**: Connect the data store to your Search App.
 5.  **Update Config**: Set the `VERTEX_SEARCH_DATA_STORE_ID` environment variable in `backend/service.yaml` and `.env` to your Data Store ID.
 
-### Configuration
+## Setup
 
-Before running any scripts, you must configure the environment variables.
+> [!IMPORTANT]
+> **Before you begin:** Please review the [Infrastructure Prerequisites](infrastructure_prerequisites.md) to ensure your Google Cloud environment (AlloyDB, IAM, etc.) is correctly configured.
 
-1.  **Run the setup script**:
+1.  **Environment Configuration**:
+    Copy the example environment file and update it with your configuration:
     ```bash
     ./setup_env.sh
     ```
     This script will prompt you for your Google Cloud Project ID, Region, AlloyDB details, and Vertex AI Search Data Store ID. It will generate a `backend/.env` file.
 
-2.  **Verify `backend/.env`**:
     Ensure all values are correct. You can use `example.env` as a reference.
 
 ### Local Debugging (Containerized)

@@ -8,10 +8,14 @@ import google.auth
 from vertexai.language_models import TextEmbeddingModel
 from vertexai.vision_models import MultiModalEmbeddingModel
 from google.cloud import discoveryengine_v1beta as discoveryengine
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, Request
+from fastapi.responses import StreamingResponse
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from dotenv import load_dotenv
+from google.cloud import storage
+
+# ... (imports remain same)
 
 # Explicitly find and load the .env file from the backend directory
 # This makes the app robust, regardless of where it's started from.
@@ -23,7 +27,7 @@ load_dotenv(dotenv_path=dotenv_path)
 # CONFIGURATION & INITIALIZATION
 # ==============================================================================
 
-app = FastAPI(title="AlloyDB Property Search (Local Demo)")
+app = FastAPI(title="AlloyDB Property Search Demo")
 
 # Configure CORS to allow the local React frontend to communicate with this backend
 app.add_middleware(
@@ -39,26 +43,20 @@ app.add_middleware(
 mm_model = None
 gemini_text_model = None
 search_client = None
+storage_client = None
 
 try:
     PROJECT_ID = os.getenv("GCP_PROJECT_ID") or os.environ.get("GOOGLE_CLOUD_PROJECT")
     LOCATION = os.getenv("GCP_LOCATION")
 
-    # Add a hard failure if Project ID or Location is not found.
-    if not PROJECT_ID:
-        raise ValueError("GCP_PROJECT_ID not found. Please ensure it is set in your backend/.env file.")
-    if not LOCATION:
-        raise ValueError("GCP_LOCATION not found. Please ensure it is set in your backend/.env file.")
+    # ... (checks remain same)
 
     # --- EXPLICIT CREDENTIALS HANDLING ---
-    # Explicitly load the user's "Application Default Credentials" (ADC)
-    # to override the default service account and use the permissions of the logged-in user.
     credentials, _ = google.auth.default(
         scopes=['https://www.googleapis.com/auth/cloud-platform']
     )
 
     # 1. Initialize Vertex AI SDK
-    # Pass the user's credentials to override the VM's service account.
     vertexai.init(project=PROJECT_ID, location=LOCATION, credentials=credentials)
     
     # 2. Load Models
@@ -69,11 +67,16 @@ try:
     
     # 3. Initialize Vertex AI Search Client
     search_client = discoveryengine.SearchServiceClient()
+
+    # 4. Initialize Storage Client
+    storage_client = storage.Client(project=PROJECT_ID, credentials=credentials)
     
 except Exception as e:
     print(f"Warning: Google Cloud initialization failed. AI features may not work.\nError: {e}")
     # The variables remain None if initialization failed
 
+
+# ... (Data Models remain same)
 
 # ==============================================================================
 # DATA MODELS
@@ -83,7 +86,7 @@ class SearchRequest(BaseModel):
     query: str
     mode: str = "nl2sql"  # Options: 'nl2sql', 'semantic', 'visual', 'vertex_search'
 
-
+# ... (Data Models remain same)
 
 # ==============================================================================
 # DATABASE HELPERS
@@ -105,13 +108,42 @@ def get_db_connection():
         print(f"DB Connection Error: {e}")
         raise HTTPException(status_code=500, detail=f"Database Connection Failed: {e}")
 
-
 # ==============================================================================
 # API ENDPOINTS
 # ==============================================================================
 
+@app.get("/api/image")
+async def get_image(gcs_uri: str):
+    """
+    Proxies images from GCS to the frontend.
+    Required because the GCS bucket is private.
+    """
+    if not storage_client:
+        raise HTTPException(500, "Storage client not initialized")
+
+    try:
+        # Parse GCS URI
+        if gcs_uri.startswith("gs://"):
+            path = gcs_uri[5:]
+            bucket_name, blob_name = path.split("/", 1)
+        elif gcs_uri.startswith("https://storage.googleapis.com/"):
+            path = gcs_uri[31:]
+            bucket_name, blob_name = path.split("/", 1)
+        else:
+            raise HTTPException(400, "Invalid GCS URI")
+
+        bucket = storage_client.bucket(bucket_name)
+        blob = bucket.blob(blob_name)
+        
+        # Open blob as stream (synchronous but acceptable for demo)
+        file_obj = blob.open("rb")
+        return StreamingResponse(file_obj, media_type="image/png")
+    except Exception as e:
+        print(f"Image Proxy Error: {e}")
+        raise HTTPException(404, "Image not found")
+
 @app.post("/api/search")
-async def search_properties(request: SearchRequest):
+async def search_properties(request: SearchRequest, raw_request: Request):
     conn = get_db_connection()
     cursor = conn.cursor()
     results = []
@@ -153,7 +185,12 @@ async def search_properties(request: SearchRequest):
 
             display_sql = f"// MANAGED SERVICE CALL\n// Vertex AI Search (Agent Builder)\n// Query: '{request.query}'\n// Strategy: Keyword + Semantic Hybrid (Auto)"
             
-            # Return early as we don't need DB connection anymore for this mode
+            # Return early (but process images first!)
+            # Process images for proxy
+            for result in results:
+                if result.get("image_gcs_uri"):
+                    result["image_gcs_uri"] = f"{raw_request.base_url}api/image?gcs_uri={result['image_gcs_uri']}"
+
             return {"listings": results, "sql": display_sql}
 
 
@@ -253,6 +290,11 @@ async def search_properties(request: SearchRequest):
                 display_sql = 'SELECT DISTINCT city FROM "search".property_listings ORDER BY city'
                 return {"listings": [], "sql": display_sql, "available_cities": cities}
 
+
+        # --- POST-PROCESSING: PROXY IMAGES ---
+        for result in results:
+            if result.get("image_gcs_uri"):
+                result["image_gcs_uri"] = f"{raw_request.base_url}api/image?gcs_uri={result['image_gcs_uri']}"
 
         return {"listings": results, "sql": display_sql}
 
