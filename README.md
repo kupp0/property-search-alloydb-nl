@@ -120,6 +120,24 @@ You must provision an AlloyDB for PostgreSQL instance and run the provided initi
 2.  **Run SQL Scripts**: Connect to your instance (e.g., via AlloyDB Studio or `psql` through the proxy) and execute the scripts in `alloydb artefacts/`:
     *   `alloydb_setup.sql`: Creates the `search` schema, tables, and enables `pgvector`.
     *   `alloydb_ai_nl_setup.sql`: Configures the `alloydb_ai_nl` extension for Natural Language to SQL.
+    
+    **Alternative: Terraform Setup (Recommended)**
+    You can provision the entire infrastructure (Project, AlloyDB, Vertex AI, GCS, IAM) using Terraform.
+    
+    1.  Navigate to `terraform/`:
+        ```bash
+        cd terraform
+        ```
+    2.  Create `terraform.tfvars` with your project details (see `terraform.tfvars.example`).
+    3.  Run Terraform:
+        ```bash
+        terraform init
+        terraform apply
+        ```
+    4.  Generate `.env` file:
+        ```bash
+        ./generate_env.sh
+        ```
 
 #### 2. Visual Search Setup (Optional)
 To enable Visual Search, you need to populate the database with images and embeddings. We provide a bootstrap script for this.
@@ -130,10 +148,19 @@ To enable Visual Search, you need to populate the database with images and embed
 2.  **Run the Bootstrap Script**:
     This script generates AI images for each listing, uploads them to GCS, calculates embeddings, and updates the database.
     ```bash
-    # Install dependencies
-    pip install -r alloydb\ artefacts/requirements.txt
+    # 1. Create a virtual environment
+    python3 -m venv venv
+    source venv/bin/activate
     
-    # Run the script (Ensure Auth Proxy is running locally!)
+    # 2. Install dependencies
+    pip install -r backend/requirements.txt
+    
+    # 3. Start AlloyDB Auth Proxy (in a separate terminal)
+    # Download the binary if needed:
+    # wget https://storage.googleapis.com/alloydb-auth-proxy/v1.12.0/alloydb-auth-proxy.linux.amd64 -O alloydb-auth-proxy && chmod +x alloydb-auth-proxy
+    ./alloydb-auth-proxy "projects/<PROJECT>/locations/<REGION>/clusters/<CLUSTER>/instances/<INSTANCE>" --address=127.0.0.1 --port=5432 --public-ip
+    
+    # 4. Run the script
     python alloydb\ artefacts/bootstrap_images.py
     ```
     *Note: This script assumes the AlloyDB Auth Proxy is running on `localhost:5432`.*

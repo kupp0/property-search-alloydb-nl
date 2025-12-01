@@ -95,6 +95,12 @@ class SearchRequest(BaseModel):
 def get_db_connection():
     """
     Establishes a connection to the AlloyDB instance via the local Auth Proxy.
+    
+    CRITICAL: This connection relies on the 'auth-proxy' sidecar container running alongside this app.
+    The proxy listens on '127.0.0.1:5432' and forwards traffic securely to AlloyDB.
+    
+    NOTE: For the proxy to work with the '--public-ip' flag (as configured in service.yaml),
+    your AlloyDB instance MUST have a PUBLIC IP address assigned.
     """
     try:
         return psycopg2.connect(
@@ -116,7 +122,8 @@ def get_db_connection():
 async def get_image(gcs_uri: str):
     """
     Proxies images from GCS to the frontend.
-    Required because the GCS bucket is private.
+    Required because the GCS bucket is private and we want to serve images securely
+    without making the entire bucket public.
     """
     if not storage_client:
         raise HTTPException(500, "Storage client not initialized")
@@ -144,6 +151,13 @@ async def get_image(gcs_uri: str):
 
 @app.post("/api/search")
 async def search_properties(request: SearchRequest, raw_request: Request):
+    """
+    Main search endpoint supporting multiple modes:
+    1. vertex_search: Uses Vertex AI Search (Agent Builder) - Managed Service.
+    2. visual: Uses Multimodal Embeddings to find images similar to the query text.
+    3. semantic: Uses Text Embeddings (Gemini) to find listings with similar descriptions.
+    4. nl2sql: Uses AlloyDB AI to generate SQL queries from natural language.
+    """
     conn = get_db_connection()
     cursor = conn.cursor()
     results = []
@@ -269,6 +283,11 @@ async def search_properties(request: SearchRequest, raw_request: Request):
                 return {"listings": [], "sql": "Could not generate SQL from query."}
 
             # SQL cleanup heuristics for demo purposes
+            # SECURITY WARNING: This executes AI-generated SQL directly against the database.
+            # In a production environment, you MUST:
+            # 1. Use a read-only database user with strictly limited permissions.
+            # 2. Implement a validation layer to parse and allow-list SQL structures.
+            # 3. Never expose this endpoint publicly without authentication and rate limiting.
             gen_sql = gen_sql.strip().rstrip(';')
             if "FROM" in gen_sql.upper():
                 gen_sql = gen_sql.replace("SELECT ", "SELECT image_gcs_uri, ", 1)

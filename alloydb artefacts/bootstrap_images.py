@@ -24,7 +24,7 @@ print(f"📂 Target Bucket: {BUCKET_NAME}")
 
 # --- INITIALIZE CLIENTS ---
 vertexai.init(project=PROJECT_ID, location=LOCATION)
-gen_model = ImageGenerationModel.from_pretrained("imagegeneration@006")
+gen_model = ImageGenerationModel.from_pretrained("imagen-4.0-fast-generate-001")
 embed_model = MultiModalEmbeddingModel.from_pretrained("multimodalembedding")
 storage_client = storage.Client()
 

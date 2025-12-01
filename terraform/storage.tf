@@ -1,6 +1,6 @@
 resource "google_storage_bucket" "images_bucket" {
   name          = "property-images-${var.project_id}"
-  project       = var.project_id
+  project       = google_project.project.project_id
   location      = var.region
   force_destroy = true
 

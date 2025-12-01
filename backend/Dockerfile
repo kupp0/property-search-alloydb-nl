@@ -1,4 +1,5 @@
 # Use official Python runtime as a parent image
+# python:3.11-slim is a lightweight image that includes only the minimal packages needed to run Python.
 FROM python:3.11-slim
 
 # Ensure python output is sent directly to terminal (no buffering)
@@ -32,4 +33,6 @@ EXPOSE 8080
 ENV PORT=8080
 
 # Run uvicorn when the container launches
+# Uvicorn is an ASGI web server implementation for Python.
+# We bind to 0.0.0.0 to ensure the container listens on all network interfaces, which is required for Cloud Run.
 CMD ["sh", "-c", "uvicorn main:app --host 0.0.0.0 --port ${PORT}"]

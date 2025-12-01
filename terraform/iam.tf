@@ -31,14 +31,18 @@ resource "google_project_iam_member" "sa_roles" {
 }
 
 # AlloyDB Service Agent (Required for AI/ML integration)
-locals {
-  alloydb_sa_email = "service-${data.google_project.project.number}@gcp-sa-alloydb.iam.gserviceaccount.com"
+# AlloyDB Service Agent (Required for AI/ML integration)
+# We must explicitly wait for the service identity to be created/available.
+resource "google_project_service_identity" "alloydb_sa" {
+  provider = google-beta
+  project  = google_project.project.project_id
+  service  = "alloydb.googleapis.com"
+
+  depends_on = [google_project_service.services]
 }
 
 resource "google_project_iam_member" "alloydb_sa_vertex_ai" {
   project = google_project.project.project_id
   role    = "roles/aiplatform.user"
-  member  = "serviceAccount:${local.alloydb_sa_email}"
-
-  depends_on = [google_project_service.services]
+  member  = "serviceAccount:${google_project_service_identity.alloydb_sa.email}"
 }

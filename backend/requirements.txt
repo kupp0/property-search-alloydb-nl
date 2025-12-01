@@ -5,4 +5,5 @@ python-dotenv
 pydantic
 google-cloud-aiplatform>=1.48.0
 google-cloud-storage
-google-cloud-discoveryengine 
+google-cloud-discoveryengine
+Pillow
