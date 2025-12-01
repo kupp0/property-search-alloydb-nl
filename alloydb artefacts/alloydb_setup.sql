@@ -92,38 +92,9 @@ CREATE TABLE "search".property_listings (
 -- Embeddings for 'description' are generated automatically upon insertion. Use Gemini to customize the sample data to your cities and add more samples if you like.
 -- Image URIs and Image Embeddings are left NULL here (populated in the Python step).
 
-INSERT INTO "search".property_listings (title, description, price, bedrooms, city) VALUES
--- ZURICH
-('Sunny Apartment in Zurich-Oerlikon', 'Bright 3.5 room apartment located near the Hallenstadion. Excellent public transport connections to the airport and city center. diverse neighborhood with many shops.', 2800.00, 2, 'Zurich'),
-('Industrial Style Loft in Zurich West', 'Trendy open-space loft in a converted factory. High ceilings, exposed concrete, and a rooftop terrace. Perfect for young creatives or a startup couple.', 3900.00, 1, 'Zurich'),
-('Exclusive Penthouse on Zurichberg', 'Top-floor residence with breathtaking views of the city and the Alps. Features a private elevator, fireplace, and a wrap-around terrace. Absolute privacy and luxury.', 9500.00, 3, 'Zurich'),
-('Student Room in Shared Flat', 'Affordable room in a lively 4-person WG in Zurich-Wiedikon. Close to bars, cafes, and nightlife. Shared kitchen and living room.', 850.00, 1, 'Zurich'),
-('Historic Townhouse in Niederdorf', 'Live in the middle of the old town. A unique 4-story house with exposed beams and historic charm. Steps away from the Limmat river and Grossmunster.', 5200.00, 3, 'Zurich'),
 
--- GENEVA
-('Modern Flat near United Nations', 'Sleek and secure 2-bedroom apartment walking distance from the UN headquarters. Concierge service and gym in the building. Ideal for diplomats.', 4800.00, 2, 'Geneva'),
-('Spacious Family Apartment in Champel', 'Quiet and green neighborhood. Large 5-room apartment with a renovated kitchen and two balconies. Close to parks and top-rated schools.', 6200.00, 3, 'Geneva'),
-('Budget Studio near Cornavin', 'Small but functional studio right next to the main train station. Perfect for a commuter needing a pied-à-terre in the city center.', 1600.00, 0, 'Geneva'),
+-- Run the 100_sample_records.sql file to populate the table with sample data.
 
--- LAUSANNE
-('Lake View Apartment in Ouchy', 'Stunning 3-bedroom flat right on the lakeside promenade. Wake up to views of the French Alps across Lake Geneva. elegant parquet floors.', 5900.00, 3, 'Lausanne'),
-('Attic Apartment near Cathedral', 'Charming top-floor flat with sloping ceilings in the heart of Lausanne. No elevator, but offers a fantastic view over the rooftops.', 2100.00, 1, 'Lausanne'),
-
--- BASEL
-('Architectural Gem near Roche Tower', 'Modern, minimalist apartment designed by a famous architect. Flooded with light, featuring high-end appliances. Walking distance to Roche campus.', 3400.00, 2, 'Basel'),
-('Riverfront Flat with Rhine View', 'Directly on the Rhine river. Watch the swimmers in summer from your balcony. Spacious living room and classic herringbone flooring.', 3100.00, 2, 'Basel'),
-
--- BERN
-('Medieval Charm in Bern Old Town', 'Located in a UNESCO World Heritage building. Sandstone walls, cellar storage, and view of the Zytglogge. A truly unique living experience.', 2600.00, 2, 'Bern'),
-('Modern Garden Apartment in Kirchenfeld', 'Ground floor apartment with a large private garden in the diplomat quarter. Quiet, secure, and very prestigious neighborhood.', 4500.00, 3, 'Bern'),
-
--- MOUNTAINS & OTHER
-('Luxury Chalet in Zermatt', 'Traditional wooden chalet with modern interior. Unobstructed view of the Matterhorn. Includes a sauna and ski boot heater. Available for long-term seasonal rent.', 12000.00, 4, 'Zermatt'),
-('Lake Lugano Villa with Pool', 'Mediterranean style villa in Ticino. Features a lush garden with palm trees, an infinity pool, and private lake access. Feel like you are on vacation every day.', 14500.00, 5, 'Lugano'),
-('Cozy Apartment in Old Lucerne', 'Right on the Reuss river with a view of the Chapel Bridge. Historic building with modern amenities. Walkable to everything.', 2900.00, 2, 'Lucerne'),
-('Remote Cabin in Grisons', 'Secluded mountain hut for nature lovers. Simple living, wood stove heating, and surrounded by forest. Accessible by 4x4 in winter.', 1200.00, 1, 'Chur'),
-('Commuter Friendly Flat in Olten', 'Practical and newly built apartment right at the train station hub. reach Zurich, Bern, or Basel in under 30 minutes. High standard finishing.', 1950.00, 2, 'Olten'),
-('Design Loft in St. Gallen', 'Close to the Abbey library. Open concept living in a converted textile warehouse. High ceilings and huge windows.', 2300.00, 1, 'St. Gallen');
 
 
 /* ===================================================================================
