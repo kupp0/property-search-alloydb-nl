@@ -41,6 +41,14 @@ resource "google_project_service_identity" "alloydb_sa" {
   depends_on = [google_project_service.services]
 }
 
+# Cloud Build Service Account Permissions
+# Required to push images to Artifact Registry
+resource "google_project_iam_member" "cloudbuild_sa_ar_writer" {
+  project = google_project.project.project_id
+  role    = "roles/artifactregistry.writer"
+  member  = "serviceAccount:${data.google_project.project.number}@cloudbuild.gserviceaccount.com"
+}
+
 resource "google_project_iam_member" "alloydb_sa_vertex_ai" {
   project = google_project.project.project_id
   role    = "roles/aiplatform.user"
