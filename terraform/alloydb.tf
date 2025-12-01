@@ -2,6 +2,8 @@ resource "google_alloydb_cluster" "default" {
   cluster_id = var.alloydb_cluster_id
   location   = var.region
   project    = google_project.project.project_id
+  
+  database_version = "POSTGRES_17"
 
   network_config {
     network = google_compute_network.vpc_network.id
@@ -19,6 +21,7 @@ resource "google_alloydb_instance" "primary" {
   cluster       = google_alloydb_cluster.default.name
   instance_id   = var.alloydb_instance_id
   instance_type = "PRIMARY"
+  availability_type = "ZONAL"
 
   machine_config {
     cpu_count = 2
