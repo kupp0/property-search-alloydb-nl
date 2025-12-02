@@ -95,6 +95,8 @@ You must provision an AlloyDB for PostgreSQL instance and run the provided initi
     *   `alloydb_setup.sql`: Creates the `search` schema, tables, and enables `pgvector`.
     *   `alloydb_ai_nl_setup.sql`: Configures the `alloydb_ai_nl` extension for Natural Language to SQL.
     
+    ![AlloyDB AI NL Architecture](assets/alloydb_ai_nl_architecture.png)
+    
     **Alternative: Terraform Setup (Recommended)**
     You can provision the entire infrastructure (Project, AlloyDB, Vertex AI, GCS, IAM) using Terraform.
     
