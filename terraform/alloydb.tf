@@ -18,6 +18,7 @@ resource "google_alloydb_cluster" "default" {
 }
 
 resource "google_alloydb_instance" "primary" {
+  provider      = google-beta
   cluster       = google_alloydb_cluster.default.name
   instance_id   = var.alloydb_instance_id
   instance_type = "PRIMARY"
@@ -34,6 +35,15 @@ resource "google_alloydb_instance" "primary" {
     "password.enforce_complexity"                    = "on"
     "google_db_advisor.enable_auto_advisor"          = "on"
     "google_db_advisor.auto_advisor_schedule"        = "EVERY 24 HOURS"
+  }
+
+  query_insights_config {
+    query_plans_per_minute = 5
+  }
+
+  observability_config {
+    enabled                       = true
+    # assistive_experiences_enabled = true # Requires Gemini Cloud Assist to be enabled on the project/user first
   }
 
   # Enable Public IP

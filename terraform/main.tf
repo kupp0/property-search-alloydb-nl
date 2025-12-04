@@ -4,10 +4,18 @@ terraform {
       source  = "hashicorp/google"
       version = ">= 5.0"
     }
+    google-beta = {
+      source  = "hashicorp/google-beta"
+      version = ">= 5.0"
+    }
   }
 }
 
 provider "google" {
+  region = var.region
+}
+
+provider "google-beta" {
   region = var.region
 }
 
@@ -32,7 +40,10 @@ resource "google_project_service" "services" {
     "servicenetworking.googleapis.com",
     "cloudresourcemanager.googleapis.com",
     "iam.googleapis.com",
-    "orgpolicy.googleapis.com"
+    "orgpolicy.googleapis.com",
+    "cloudaicompanion.googleapis.com",
+    "monitoring.googleapis.com",
+    "cloudtrace.googleapis.com"
   ])
 
   project = google_project.project.project_id
