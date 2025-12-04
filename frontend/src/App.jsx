@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
-import { Sparkles, X, Search, MapPin, Bed, Database, BrainCircuit, Eye, CloudLightning, Moon, Sun } from 'lucide-react';
+import { Sparkles, X, Search, MapPin, Bed, Database, BrainCircuit, Eye, CloudLightning, Moon, Sun, Info, Workflow } from 'lucide-react';
 import SearchExamples from './components/SearchExamples';
+import ArchitectureModal from './components/ArchitectureModal';
 
 const formatCurrency = (number) => {
     return new Intl.NumberFormat('en-US', {
@@ -48,8 +49,10 @@ function App() {
     const [generatedSql, setGeneratedSql] = useState('');
     const [availableCities, setAvailableCities] = useState([]);
     const [mode, setMode] = useState('nl2sql'); 
-    const [weight, setWeight] = useState(0.6);
+    const [weight, setWeight] = useState(0.5); // Default weight for semantic search
+
     const [darkMode, setDarkMode] = useState(true); 
+    const [showArchitecture, setShowArchitecture] = useState(false); 
 
     const handleSearch = async (queryOverride) => {
         const searchQuery = typeof queryOverride === 'string' ? queryOverride : query;
@@ -102,6 +105,9 @@ function App() {
                         <div className="flex flex-col xl:flex-row justify-between items-center mb-6 gap-4">
                                 <h2 className="text-2xl font-bold text-slate-900 dark:text-white whitespace-nowrap flex items-center">
                                     Property Search <span className="text-xs font-normal text-slate-400 border border-slate-200 dark:border-slate-700 px-2 py-0.5 rounded-full ml-2">BETA</span>
+                                    <button onClick={() => setShowArchitecture(true)} className="ml-2 px-3 py-1 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors text-sm font-medium flex items-center gap-2">
+                                        <Workflow className="w-4 h-4" /> Architecture
+                                    </button>
                                     <button onClick={() => setDarkMode(!darkMode)} className="ml-4 p-2 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors">
                                         {darkMode ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
                                     </button>
@@ -206,6 +212,7 @@ function App() {
                 </div>
             </div>
         </div>
+            <ArchitectureModal isOpen={showArchitecture} onClose={() => setShowArchitecture(false)} />
         </div>
     );
 }

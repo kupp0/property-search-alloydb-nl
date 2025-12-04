@@ -33,6 +33,8 @@ fi
 
 # Copy proxy to Bastion (since Bastion might not have internet)
 echo "   Copying proxy to Bastion..."
+# Kill existing proxy process to avoid "Text file busy" error
+gcloud compute ssh $BASTION_NAME --zone $BASTION_ZONE --command "killall alloydb-auth-proxy || true" --quiet
 gcloud compute scp alloydb-auth-proxy $BASTION_NAME:~/alloydb-auth-proxy --zone $BASTION_ZONE --quiet
 gcloud compute ssh $BASTION_NAME --zone $BASTION_ZONE --command "chmod +x alloydb-auth-proxy"
 
@@ -40,7 +42,7 @@ gcloud compute ssh $BASTION_NAME --zone $BASTION_ZONE --command "chmod +x alloyd
 # We tunnel local 5432 -> Bastion 5432 (where proxy listens)
 echo "   Establishing SSH tunnel and starting remote proxy..."
 gcloud compute ssh $BASTION_NAME --zone $BASTION_ZONE \
-    --command "./alloydb-auth-proxy \"$INSTANCE_URI\" --address=127.0.0.1 --port=5432" \
+    --command "./alloydb-auth-proxy \"$INSTANCE_URI\" --address=127.0.0.1 --port=5432 --debug-logs" \
     -- -L 5432:127.0.0.1:5432 > proxy.log 2>&1 &
 PROXY_PID=$!
 echo "   Proxy/Tunnel PID: $PROXY_PID"
