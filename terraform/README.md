@@ -46,6 +46,10 @@ Run `terraform apply` to create the infrastructure.
 terraform apply
 ```
 *Type `yes` when prompted to confirm.*
+    
+### 5. Manual Database Setup
+**IMPORTANT:** After applying Terraform, you must manually initialize the database schema and extensions.
+Please refer to the **[Database & AI Setup](../README.md#1-alloydb-setup)** section in the root `README.md` for detailed instructions on running the SQL scripts.
 
 ## What gets created?
 
@@ -58,7 +62,7 @@ terraform apply
 -   **Bastion Host**: `search-demo-bastion` (e2-micro) for SSH tunneling.
 -   **Artifact Registry**: Repository `search-app-repo`.
 -   **IAM**: Creates a dedicated Service Account `search-backend-sa` and grants necessary roles.
--   **Vertex AI Search**: Creates a Data Store `property-listings-ds` linked to AlloyDB (via API call).
+-   **IAM**: Creates a dedicated Service Account `search-backend-sa` and grants necessary roles.
 
 
 ## 5. Deploy Application (Optional)
@@ -86,6 +90,6 @@ After a successful apply, Terraform will output:
 -   `backend_service_account`
 -   `bastion_instance_name`
 -   `bastion_zone`
--   `vertex_ai_data_store_id`
+-   `bastion_zone`
 
 You can use these values to configure your `backend/.env` file.

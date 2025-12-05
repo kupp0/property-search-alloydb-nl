@@ -25,8 +25,8 @@ extract_value() {
 
 PROJECT_ID=$(extract_value "project_id")
 CLUSTER_ID=$(extract_value "alloydb_cluster_id")
-INSTANCE_ID=$(extract_value "alloydb_primary_instance_id")
-DATA_STORE_ID=$(extract_value "vertex_ai_data_store_id")
+INSTANCE_ID=$(extract_value "alloydb_instance_id")
+
 REGION=$(cd "$TERRAFORM_DIR" && grep 'region' terraform.tfvars | cut -d'=' -f2 | tr -d ' "')
 
 # Fallback for Region if not in tfvars (default)
@@ -62,7 +62,6 @@ INSTANCE_CONNECTION_NAME=$INSTANCE_CONNECTION_NAME
 DB_NAME=postgres
 DB_USER=postgres
 DB_PASSWORD=$DB_PASSWORD
-VERTEX_SEARCH_DATA_STORE_ID=$DATA_STORE_ID
 EOF
 
 echo "🎉 Configuration saved to $ENV_FILE"

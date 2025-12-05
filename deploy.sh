@@ -3,6 +3,9 @@
 # Exit on error
 set -e
 
+# Ensure we are in the script's directory
+cd "$(dirname "$0")"
+
 # Configuration
 if [ -f "backend/.env" ]; then
     echo "📄 Loading configuration from backend/.env..."
@@ -28,7 +31,7 @@ BACKEND_SERVICE_NAME="search-backend"
 FRONTEND_SERVICE_NAME="search-frontend"
 
 # Ensure required variables are set
-if [ -z "$INSTANCE_CONNECTION_NAME" ] || [ -z "$VERTEX_SEARCH_DATA_STORE_ID" ]; then
+if [ -z "$INSTANCE_CONNECTION_NAME" ]; then
     echo "❌ Missing required configuration in backend/.env"
     exit 1
 fi
@@ -96,8 +99,7 @@ check_service_account_permissions() {
     if echo "$SA_ROLES" | grep -q "roles/logging.logWriter" && \
        echo "$SA_ROLES" | grep -q "roles/artifactregistry.repoAdmin" && \
        echo "$SA_ROLES" | grep -q "roles/alloydb.client" && \
-       echo "$SA_ROLES" | grep -q "roles/serviceusage.serviceUsageConsumer" && \
-       echo "$SA_ROLES" | grep -q "roles/discoveryengine.editor"; then
+       echo "$SA_ROLES" | grep -q "roles/serviceusage.serviceUsageConsumer"; then
         echo "✅ Service Account appears to have necessary roles."
     else
         echo "⚠️  WARNING: Service Account '$COMPUTE_SA' might be missing roles."
@@ -117,9 +119,7 @@ check_service_account_permissions() {
         echo "gcloud projects add-iam-policy-binding $PROJECT_ID \\"
         echo "    --member='serviceAccount:$COMPUTE_SA' \\"
         echo "    --role='roles/serviceusage.serviceUsageConsumer'"
-        echo "gcloud projects add-iam-policy-binding $PROJECT_ID \\"
-        echo "    --member='serviceAccount:$COMPUTE_SA' \\"
-        echo "    --role='roles/discoveryengine.editor'"
+
         echo ""
         echo "You can copy and run the above commands manually."
         echo "Exiting to prevent build/runtime failure..."
@@ -176,7 +176,7 @@ export DB_USER
 export DB_NAME
 export DB_PASSWORD
 export INSTANCE_CONNECTION_NAME
-export VERTEX_SEARCH_DATA_STORE_ID
+
 
 envsubst < backend/service.yaml > backend/service.resolved.yaml
 

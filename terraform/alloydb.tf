@@ -37,18 +37,12 @@ resource "google_alloydb_instance" "primary" {
     "google_db_advisor.auto_advisor_schedule"        = "EVERY 24 HOURS"
   }
 
-  query_insights_config {
-    query_plans_per_minute = 5
-  }
-
   observability_config {
     enabled                       = true
-    # assistive_experiences_enabled = true # Requires Gemini Cloud Assist to be enabled on the project/user first
-  }
-
-  # Enable Public IP
-  # Public IP Disabled for security
-  network_config {
-    enable_public_ip = false
+    max_query_string_length       = 10240
+    track_wait_event_types        = true
+    track_wait_events             = true
+    query_plans_per_minute        = 20
+    # assistive_experiences_enabled = true # Uncomment if Gemini Cloud Assist is enabled
   }
 }

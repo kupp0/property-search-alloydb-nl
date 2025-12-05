@@ -38,14 +38,4 @@ variable "db_password" {
   sensitive   = true
 }
 
-variable "data_store_id" {
-  description = "The ID of the Vertex AI Search Data Store"
-  type        = string
-  default     = "property-listings-ds"
-}
 
-variable "data_store_display_name" {
-  description = "The display name of the Vertex AI Search Data Store"
-  type        = string
-  default     = "Property Listings"
-}

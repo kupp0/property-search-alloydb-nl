@@ -17,3 +17,5 @@ output "alloydb_instance_id" {
 output "backend_service_account" {
   value = google_service_account.backend_sa.email
 }
+
+
