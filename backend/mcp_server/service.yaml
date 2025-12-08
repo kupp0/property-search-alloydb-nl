@@ -1,0 +1,35 @@
+apiVersion: serving.knative.dev/v1
+kind: Service
+metadata:
+  name: search-toolbox
+  annotations:
+    run.googleapis.com/launch-stage: BETA
+spec:
+  template:
+    metadata:
+      annotations:
+        run.googleapis.com/execution-environment: gen2
+        run.googleapis.com/network-interfaces: '[{"network":"search-demo-vpc","subnetwork":"search-demo-vpc"}]'
+        run.googleapis.com/vpc-access-egress: private-ranges-only
+    spec:
+      serviceAccountName: ${SERVICE_ACCOUNT}
+      containers:
+      - name: toolbox
+        image: ${TOOLBOX_IMAGE}
+        ports:
+        - containerPort: 8080
+        env:
+        - name: DB_PASSWORD
+          value: "${DB_PASSWORD}"
+      
+      # --- ALLOYDB AUTH PROXY SIDECAR ---
+      - name: auth-proxy
+        image: gcr.io/alloydb-connectors/alloydb-auth-proxy:latest
+        args:
+        - "${INSTANCE_CONNECTION_NAME}"
+        - "--address=127.0.0.1"
+        - "--port=5432"
+        resources:
+          limits:
+            cpu: "1000m"
+            memory: "512Mi"

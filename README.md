@@ -27,8 +27,44 @@ This application follows a modern, containerized microservices architecture desi
 3.  **AlloyDB Auth Proxy**: A sidecar process that manages secure, encrypted connections to AlloyDB, eliminating the need for handling static database credentials.
 4.  **AlloyDB for PostgreSQL**: The primary relational database, enhanced with `pgvector` for semantic search and `alloydb_ai_nl` for natural language to SQL translation.
 5.  **Vertex AI**: Provides the AI models for embeddings (text & multimodal) and the fully managed search engine.
+6.  **ADK Agent Service**: A dedicated AI Agent built with the Google Agent Development Kit (ADK) that acts as a "Concierge," helping users find properties via natural language chat.
+7.  **MCP Toolbox Service**: A Model Context Protocol (MCP) server that exposes AlloyDB tools (like `search-properties`) to the Agent.
 
-![Architecture Diagram](assets/architecture_diagram.png)
+```mermaid
+graph TD
+    User[User] -->|HTTPS| Frontend
+    
+    subgraph "Cloud Run Services"
+        Frontend[Frontend (React + Vite)]
+        Backend[Backend API (FastAPI)]
+        Agent[ADK Agent Service]
+        Toolbox[MCP Toolbox Service]
+    end
+    
+    subgraph "Infrastructure"
+        Proxy[AlloyDB Auth Proxy]
+        AlloyDB[(AlloyDB for PostgreSQL)]
+        VertexAI[Vertex AI (Gemini & Search)]
+    end
+
+    %% Frontend Interactions
+    Frontend -->|/api (Search)| Backend
+    Frontend -->|/agent (Chat)| Agent
+    
+    %% Backend Interactions
+    Backend -->|SQL / pgvector| Proxy
+    Backend -->|Embeddings / Search| VertexAI
+        
+    %% Toolbox Interactions
+    Toolbox -->|SQL (Tools)| Proxy
+    
+    %% Agent Interactions
+    Agent -->|Model Context Protocol| Toolbox
+    Agent -->|Generate Content (Gemini 2.5)| VertexAI
+
+    %% Infrastructure Connections
+    Proxy -->|Secure Tunnel| AlloyDB
+```
 
 ### User Interface
 The interface is designed to be intuitive, offering four distinct search modes to cater to different user needs.
@@ -38,6 +74,8 @@ The interface is designed to be intuitive, offering four distinct search modes t
 ## Technical Architecture
 * **Frontend:** React + Vite (Containerized with Nginx)
 * **Backend:** FastAPI (Containerized with Python 3.11)
+* **Agent:** Google ADK (Python 3.11) + Gemini 2.5
+* **Toolbox:** Model Context Protocol (MCP) Server
 * **Database:** AlloyDB for PostgreSQL (with `alloydb_ai_nl` and `vector` extensions)
 * **AI Services:** Vertex AI (Embeddings, Multimodal, Search)
 
@@ -179,8 +217,10 @@ This will:
 2. Start the **AlloyDB Auth Proxy** on the Bastion.
 3. Tunnel the connection to your local machine (`localhost:5432`).
 4. Build and run the **Backend container** (connected to the tunnel).
-5. Build and run the **Frontend container** (connected to the backend).
-6. Access the app at `http://localhost:8081`.
+5. Build and run the **Toolbox container** (connected to the tunnel).
+6. Build and run the **Agent container** (connected to Toolbox).
+7. Build and run the **Frontend container** (connected to Backend and Agent).
+8. Access the app at `http://localhost:8081`.
 
 
 ### Deployment to Cloud Run

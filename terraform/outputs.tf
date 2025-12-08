@@ -1,21 +1,19 @@
 output "project_id" {
-  value = google_project.project.project_id
+  value = var.project_id
 }
 
 output "region" {
   value = var.region
 }
 
-output "alloydb_cluster_id" {
-  value = google_alloydb_cluster.default.cluster_id
+output "alloydb_cluster_ip" {
+  value = google_compute_global_address.private_ip_address.address
 }
 
-output "alloydb_instance_id" {
-  value = google_alloydb_instance.primary.instance_id
+output "bastion_ssh_command" {
+  value = "gcloud compute ssh ${google_compute_instance.bastion.name} --zone ${var.zone} --tunnel-through-iap"
 }
 
-output "backend_service_account" {
-  value = google_service_account.backend_sa.email
+output "toolbox_url" {
+  value = google_cloud_run_v2_service.toolbox.uri
 }
-
-

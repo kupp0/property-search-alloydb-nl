@@ -192,7 +192,51 @@ gcloud run services add-iam-policy-binding $BACKEND_SERVICE_NAME \
 BACKEND_URL=$(gcloud run services describe $BACKEND_SERVICE_NAME --platform managed --region $REGION --format 'value(status.url)')
 echo "✅ Backend deployed at: $BACKEND_URL"
 
-# 3. Build and Push Frontend Image
+# 3. Build and Push Toolbox Image
+echo "📦 Building Toolbox Image..."
+TOOLBOX_SERVICE_NAME="search-toolbox"
+TOOLBOX_IMAGE="$REPO_URI/$TOOLBOX_SERVICE_NAME:$TAG"
+gcloud builds submit backend/mcp_server --tag $TOOLBOX_IMAGE
+
+# 4. Deploy Toolbox
+echo "🚀 Deploying Toolbox..."
+export TOOLBOX_IMAGE
+envsubst < backend/mcp_server/service.yaml > backend/mcp_server/service.resolved.yaml
+gcloud run services replace backend/mcp_server/service.resolved.yaml --region $REGION
+
+# Allow unauthenticated access (internal/demo) - or restrict if needed
+# For simplicity in this demo, we allow unauthenticated so Agent can call it easily without ID token logic
+gcloud run services add-iam-policy-binding $TOOLBOX_SERVICE_NAME \
+    --region $REGION \
+    --member="allUsers" \
+    --role="roles/run.invoker"
+
+TOOLBOX_URL=$(gcloud run services describe $TOOLBOX_SERVICE_NAME --platform managed --region $REGION --format 'value(status.url)')
+echo "✅ Toolbox deployed at: $TOOLBOX_URL"
+
+# 5. Build and Push Agent Image
+echo "📦 Building Agent Image..."
+AGENT_SERVICE_NAME="search-agent"
+AGENT_IMAGE="$REPO_URI/$AGENT_SERVICE_NAME:$TAG"
+gcloud builds submit backend/agent --tag $AGENT_IMAGE
+
+# 6. Deploy Agent
+echo "🚀 Deploying Agent..."
+export AGENT_IMAGE
+export TOOLBOX_URL
+envsubst < backend/agent/service.yaml > backend/agent/service.resolved.yaml
+gcloud run services replace backend/agent/service.resolved.yaml --region $REGION
+
+gcloud run services add-iam-policy-binding $AGENT_SERVICE_NAME \
+    --region $REGION \
+    --member="allUsers" \
+    --role="roles/run.invoker"
+
+AGENT_URL=$(gcloud run services describe $AGENT_SERVICE_NAME --platform managed --region $REGION --format 'value(status.url)')
+echo "✅ Agent deployed at: $AGENT_URL"
+
+
+# 7. Build and Push Frontend Image
 echo "📦 Building Frontend Image..."
 gcloud builds submit frontend --tag $FRONTEND_IMAGE
 
@@ -203,7 +247,7 @@ gcloud run deploy $FRONTEND_SERVICE_NAME \
     --region $REGION \
     --platform managed \
     --allow-unauthenticated \
-    --set-env-vars BACKEND_URL=$BACKEND_URL
+    --set-env-vars BACKEND_URL=$BACKEND_URL,AGENT_URL=$AGENT_URL
 
 # Get Frontend URL
 FRONTEND_URL=$(gcloud run services describe $FRONTEND_SERVICE_NAME --platform managed --region $REGION --format 'value(status.url)')

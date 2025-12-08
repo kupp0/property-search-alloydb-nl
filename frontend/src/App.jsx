@@ -1,45 +1,10 @@
 import React, { useState } from 'react';
-import { Sparkles, X, Search, MapPin, Bed, Database, BrainCircuit, Eye, CloudLightning, Moon, Sun, Info, Workflow } from 'lucide-react';
+import { Sparkles, X, Search, MapPin, Bed, Database, BrainCircuit, Eye, CloudLightning, Moon, Sun, Info, Workflow, Bot } from 'lucide-react';
 import SearchExamples from './components/SearchExamples';
 import ArchitectureModal from './components/ArchitectureModal';
+import ChatInterface from './components/ChatInterface';
 
-const formatCurrency = (number) => {
-    return new Intl.NumberFormat('en-US', {
-        style: 'currency',
-        currency: 'CHF',
-        maximumFractionDigits: 0,
-    }).format(number);
-};
-
-const ListingCard = ({ listing }) => {
-    const [imageUrl, setImageUrl] = useState(listing.image_gcs_uri || null);
-
-
-    return (
-        <div className="bg-white/80 dark:bg-slate-800/60 backdrop-blur-md rounded-2xl shadow-sm border border-white/40 dark:border-slate-700/50 overflow-hidden hover:shadow-xl hover:-translate-y-1 transition-all duration-300 flex flex-col group">
-            <div className="h-48 bg-slate-100 relative overflow-hidden group">
-                {imageUrl ? (
-                    <img src={imageUrl} alt="Property" className="w-full h-full object-cover hover:scale-105 transition-transform duration-700" />
-                ) : (
-                        <div className="w-full h-full flex flex-col items-center justify-center text-slate-400 dark:text-slate-500 bg-slate-50 dark:bg-slate-900/50">
-                            <span className="text-4xl mb-2">🏠</span>
-                        </div>
-                )}
-                <div className="absolute top-3 right-3 bg-white/95 px-2 py-1 rounded shadow-sm font-bold text-sm text-slate-700">
-                    {listing.price ? formatCurrency(listing.price) : "N/A"}
-                </div>
-            </div>
-            <div className="p-5 flex flex-col flex-grow">
-                <h3 className="text-lg font-bold text-gray-900 dark:text-white mb-1 truncate">{listing.title}</h3>
-                <div className="flex items-center text-gray-500 dark:text-gray-400 text-sm mb-4"><MapPin className="w-4 h-4 mr-1" /> {listing.city}</div>
-                <div className="flex items-center gap-4 text-xs text-gray-600 dark:text-gray-300 mb-4 pb-4 border-b border-gray-100 dark:border-gray-700">
-                     {listing.bedrooms !== undefined && <><Bed className="w-4 h-4 text-teal-500 mr-1" /> {listing.bedrooms} Beds</>}
-                </div>
-                <p className="text-sm text-gray-600 dark:text-gray-400 line-clamp-3">{listing.description}</p>
-            </div>
-        </div>
-    );
-};
+import ListingCard from './components/ListingCard';
 
 function App() {
     const [query, setQuery] = useState('');
@@ -53,6 +18,7 @@ function App() {
 
     const [darkMode, setDarkMode] = useState(true); 
     const [showArchitecture, setShowArchitecture] = useState(false); 
+    const [isChatOpen, setIsChatOpen] = useState(false); 
 
     const handleSearch = async (queryOverride) => {
         const searchQuery = typeof queryOverride === 'string' ? queryOverride : query;
@@ -127,45 +93,50 @@ function App() {
                             </div>
                         </div>
 
-                            <p className="text-slate-500 dark:text-slate-400 mb-6">
-                            {mode === 'nl2sql' && "Builder Mode: AlloyDB generates precise SQL queries for filters."}
-                                {mode === 'semantic' && (
-                                    <div className="flex flex-col gap-2">
-                                        <span>Builder Mode: Hybrid search combining Text and Image similarity.</span>
-                                        <div className="flex items-center gap-4 bg-slate-100 dark:bg-slate-800 p-3 rounded-lg w-full max-w-md">
-                                            <span className="text-xs font-bold text-slate-500 uppercase">Image</span>
-                                            <input
-                                                type="range"
-                                                min="0"
-                                                max="1"
-                                                step="0.1"
-                                                value={weight}
-                                                onChange={(e) => setWeight(parseFloat(e.target.value))}
-                                                className="w-full h-2 bg-slate-200 rounded-lg appearance-none cursor-pointer dark:bg-slate-700 accent-indigo-500"
-                                            />
-                                            <span className="text-xs font-bold text-slate-500 uppercase">Text</span>
-                                            <span className="text-xs font-mono bg-white dark:bg-slate-900 px-2 py-1 rounded border border-slate-200 dark:border-slate-600 min-w-[3rem] text-center">
-                                                {(weight * 100).toFixed(0)}%
-                                            </span>
+                            {mode !== 'agent' && (
+                                <>
+                                    <p className="text-slate-500 dark:text-slate-400 mb-6">
+                                        {mode === 'nl2sql' && "Builder Mode: AlloyDB generates precise SQL queries for filters."}
+                                        {mode === 'semantic' && (
+                                            <div className="flex flex-col gap-2">
+                                                <span>Builder Mode: Hybrid search combining Text and Image similarity.</span>
+                                                <div className="flex items-center gap-4 bg-slate-100 dark:bg-slate-800 p-3 rounded-lg w-full max-w-md">
+                                                    <span className="text-xs font-bold text-slate-500 uppercase">Image</span>
+                                                    <input
+                                                        type="range"
+                                                        min="0"
+                                                        max="1"
+                                                        step="0.1"
+                                                        value={weight}
+                                                        onChange={(e) => setWeight(parseFloat(e.target.value))}
+                                                        className="w-full h-2 bg-slate-200 rounded-lg appearance-none cursor-pointer dark:bg-slate-700 accent-indigo-500"
+                                                    />
+                                                    <span className="text-xs font-bold text-slate-500 uppercase">Text</span>
+                                                    <span className="text-xs font-mono bg-white dark:bg-slate-900 px-2 py-1 rounded border border-slate-200 dark:border-slate-600 min-w-[3rem] text-center">
+                                                        {(weight * 100).toFixed(0)}%
+                                                    </span>
+                                                </div>
+                                            </div>
+                                        )}
+                                        {mode === 'vertex_search' && "Managed Mode: Fully managed 'Black Box' search service (Agent Builder)."}
+                                    </p>
+
+                                    <SearchExamples currentQuery={query} onSelectQuery={setQuery} />
+
+                                    <div className="relative group mb-6">
+                                        <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                                            <Sparkles className={`h-6 w-6 transition-colors ${mode === 'vertex_search' ? 'text-orange-500' : 'text-slate-400'}`} />
                                         </div>
+                                        <input type="text" className="block w-full pl-12 pr-4 py-4 bg-white dark:bg-slate-800 border-2 border-slate-200 dark:border-slate-700 rounded-xl focus:ring-0 text-lg shadow-sm text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500" placeholder="Describe your dream home..." value={query} onChange={(e) => setQuery(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && handleSearch()} />
                                     </div>
-                                )}
-                            {mode === 'vertex_search' && "Managed Mode: Fully managed 'Black Box' search service (Agent Builder)."}
-                        </p>
 
-                        <SearchExamples currentQuery={query} onSelectQuery={setQuery} />
 
-                        <div className="relative group mb-6">
-                            <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-                                <Sparkles className={`h-6 w-6 transition-colors ${mode === 'vertex_search' ? 'text-orange-500' : 'text-slate-400'}`} />
-                            </div>
-                                <input type="text" className="block w-full pl-12 pr-4 py-4 bg-white dark:bg-slate-800 border-2 border-slate-200 dark:border-slate-700 rounded-xl focus:ring-0 text-lg shadow-sm text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500" placeholder="Describe your dream home..." value={query} onChange={(e) => setQuery(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && handleSearch()} />
-                        </div>
-
-                            <div className="flex justify-between border-t border-slate-100 dark:border-slate-700 pt-6">
-                                <button onClick={handleClear} className="text-slate-500 dark:text-slate-400 font-bold hover:text-slate-700 dark:hover:text-slate-200 px-4 py-2"><X className="inline w-4 h-4 mr-1" /> Clear</button>
-                            <button onClick={handleSearch} disabled={isLoading} className={`font-bold py-3 px-10 rounded-lg shadow-md text-white transition-all ${mode === 'vertex_search' ? 'bg-orange-500 hover:bg-orange-600' : 'bg-teal-500 hover:bg-teal-600'}`}>{isLoading ? '...' : 'Search'}</button>
-                        </div>
+                                    <div className="flex justify-between border-t border-slate-100 dark:border-slate-700 pt-6">
+                                        <button onClick={handleClear} className="text-slate-500 dark:text-slate-400 font-bold hover:text-slate-700 dark:hover:text-slate-200 px-4 py-2"><X className="inline w-4 h-4 mr-1" /> Clear</button>
+                                        <button onClick={handleSearch} disabled={isLoading} className={`font-bold py-3 px-10 rounded-lg shadow-md text-white transition-all ${mode === 'vertex_search' ? 'bg-orange-500 hover:bg-orange-600' : 'bg-teal-500 hover:bg-teal-600'}`}>{isLoading ? '...' : 'Search'}</button>
+                                    </div>
+                                </>
+                            )}
                     </div>
                 </div>
             </div>
@@ -207,10 +178,43 @@ function App() {
                     </div>
                 )}
 
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                    {results.map((listing, i) => <ListingCard key={i} listing={listing} />)}
-                </div>
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                        {results.map((listing, i) => <ListingCard key={i} listing={listing} />)}
+                    </div>
             </div>
+
+                {/* Floating Chat Widget */}
+                <div className="fixed bottom-6 right-6 z-50 flex flex-col items-end">
+                    {isChatOpen && (
+                        <div className="mb-4 w-[400px] h-[600px] shadow-2xl rounded-2xl overflow-hidden animate-in fade-in slide-in-from-bottom-10 duration-300">
+                            <ChatInterface
+                                onClose={() => setIsChatOpen(false)}
+                                onResultsFound={(agentResults, agentQuery) => {
+                                    setResults(agentResults);
+                                    if (agentQuery) setQuery(agentQuery);
+                                    // Optionally clear other search states if needed
+                                    setGeneratedSql('');
+                                    setAvailableCities([]);
+                                }}
+                            />
+                        </div>
+                    )}
+                    <button
+                        onClick={() => setIsChatOpen(!isChatOpen)}
+                        className={`group relative p-4 rounded-full shadow-2xl transition-all duration-300 transform hover:scale-110 active:scale-95 flex items-center justify-center ${isChatOpen
+                                ? 'bg-slate-800 text-white hover:bg-slate-700'
+                                : 'bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-600 text-white hover:shadow-indigo-500/50'
+                            }`}
+                    >
+                        {!isChatOpen && (
+                            <span className="absolute -top-1 -right-1 flex h-4 w-4">
+                                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-pink-400 opacity-75"></span>
+                                <span className="relative inline-flex rounded-full h-4 w-4 bg-pink-500"></span>
+                            </span>
+                        )}
+                        {isChatOpen ? <X className="w-8 h-8" /> : <Bot className="w-8 h-8" />}
+                    </button>
+                </div>
         </div>
             <ArchitectureModal isOpen={showArchitecture} onClose={() => setShowArchitecture(false)} />
         </div>

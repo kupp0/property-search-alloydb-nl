@@ -32,3 +32,4 @@ backend/service.resolved.yaml
 temp_*.png
 temp_*.jpg
 *.jsonl
+toolbox

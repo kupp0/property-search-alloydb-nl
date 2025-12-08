@@ -51,7 +51,7 @@ echo "   Proxy/Tunnel PID: $PROXY_PID"
 # Cleanup function
 cleanup() {
     echo "🧹 Stopping containers and proxy..."
-    sudo docker stop search-backend search-frontend || true
+    sudo docker stop search-backend search-frontend agent-service toolbox-service || true
     kill $PROXY_PID || true
 }
 trap cleanup EXIT
@@ -80,6 +80,37 @@ sudo docker run -d --rm \
 
 echo "   Backend running on localhost:8080"
 
+echo "   Backend running on localhost:8080"
+
+# 2.3. Run Toolbox Container
+echo "📦 Running Toolbox Container..."
+sudo docker run -d --rm \
+    --name toolbox-service \
+    --network host \
+    -e PORT=8085 \
+    -e DB_PASSWORD=$DB_PASSWORD \
+    -v $(pwd)/backend/mcp_server/tools_local.yaml:/secrets/tools.yaml:ro \
+    us-central1-docker.pkg.dev/database-toolbox/toolbox/toolbox:latest \
+    --tools-file=/secrets/tools.yaml --address=0.0.0.0 --port=8085
+
+echo "   Toolbox running on localhost:8085"
+echo "📦 Running Agent Container..."
+sudo docker build -t local-agent-service backend/agent/
+sudo docker run -d --rm \
+    --name agent-service \
+    --network host \
+    -e PORT=8083 \
+    -e GOOGLE_CLOUD_PROJECT=$PROJECT_ID \
+    -e GOOGLE_CLOUD_REGION="us-central1" \
+    -e GOOGLE_GENAI_USE_VERTEXAI=true \
+    -e GOOGLE_CLOUD_LOCATION="us-central1" \
+    -e TOOLBOX_URL="http://localhost:8085" \
+    -e GOOGLE_APPLICATION_CREDENTIALS=/tmp/keys.json \
+    -v $HOME/.config/gcloud/application_default_credentials.json:/tmp/keys.json:ro \
+    local-agent-service
+
+echo "   Agent running on localhost:8083"
+
 # 3. Run Frontend Container
 echo "📦 Running Frontend Container..."
 sudo docker run -d --rm \
@@ -87,6 +118,7 @@ sudo docker run -d --rm \
     --network host \
     -e PORT=8081 \
     -e BACKEND_URL="http://localhost:8080" \
+    -e AGENT_URL="http://localhost:8083" \
     local-search-frontend
 
 echo "   Frontend running on localhost:8081"

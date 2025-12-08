@@ -17,6 +17,7 @@ Combined Setup & Hardening Script
 SET search_path TO "search", public;
 
 -- Install/Update the Natural Language extension
+CREATE EXTENSION IF NOT EXISTS parameterized_views CASCADE;
 CREATE EXTENSION IF NOT EXISTS alloydb_ai_nl CASCADE;
 ALTER EXTENSION alloydb_ai_nl UPDATE;
 
@@ -27,7 +28,6 @@ WHERE installed_version IS NOT NULL;
 
 -- Create the configuration
 SELECT alloydb_ai_nl.g_create_configuration('property_search_config');
-
 
 -- 1. SCHEMA CONTEXT & TUNING
 -- ===================================================================================

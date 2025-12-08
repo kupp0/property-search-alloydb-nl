@@ -1,0 +1,16 @@
+sources:
+  alloydb-search:
+    kind: "alloydb-postgres"
+    project: "${PROJECT_ID}"
+    region: "europe-west1"
+    cluster: "search-cluster"
+    instance: "search-primary"
+    database: "postgres"
+    user: "postgres"
+    password: "${DB_PASSWORD}"
+tools:
+  search-properties:
+    kind: alloydb-ai-nl
+    source: alloydb-search
+    description: "Search for properties using natural language. You can ask for specific features, price ranges, locations, or vibes (e.g., 'modern apartment in Zurich under 5k')."
+    nlConfig: "property_search_config"

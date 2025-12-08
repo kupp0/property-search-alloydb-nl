@@ -44,11 +44,28 @@ CREATE EXTENSION IF NOT EXISTS vector CASCADE;
 -- Enable AlloyDB ScaNN (High-performance vector indexing)
 CREATE EXTENSION IF NOT EXISTS alloydb_scann CASCADE;
 
+-- Enable Parameterized Views (Required for Toolbox)
+CREATE EXTENSION IF NOT EXISTS parameterized_views CASCADE;
+
 -- Enable Natural Language Support (For the NL2SQL features configured later)
 CREATE EXTENSION IF NOT EXISTS alloydb_ai_nl CASCADE;
 
 -- Update extensions to ensure latest versions are active
 ALTER EXTENSION alloydb_ai_nl UPDATE;
+
+--Register latest embedding model to AlloyDB
+-- Example to register a different embedding model:
+CALL google_ml.create_model(
+  model_id => 'my_gemini_embedding_model',
+  model_provider => 'google',
+  model_qualified_name => 'gemini-embedding-001', -- Or the specific one you want
+  model_type => 'text_embedding',
+  model_auth_type => 'alloydb_service_agent_iam'
+);
+
+-- Check registered models
+SELECT * FROM google_ml.model_info_view;
+
 
 -- VERIFICATION: Check integration status
 -- Expectation: Should show valid version and model support enabled

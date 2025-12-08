@@ -35,6 +35,7 @@ resource "google_alloydb_instance" "primary" {
     "password.enforce_complexity"                    = "on"
     "google_db_advisor.enable_auto_advisor"          = "on"
     "google_db_advisor.auto_advisor_schedule"        = "EVERY 24 HOURS"
+    "parameterized_views.enabled"                    = "on"
   }
 
   observability_config {
