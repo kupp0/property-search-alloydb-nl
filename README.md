@@ -30,41 +30,7 @@ This application follows a modern, containerized microservices architecture desi
 6.  **ADK Agent Service**: A dedicated AI Agent built with the Google Agent Development Kit (ADK) that acts as a "Concierge," helping users find properties via natural language chat.
 7.  **MCP Toolbox Service**: A Model Context Protocol (MCP) server that exposes AlloyDB tools (like `search-properties`) to the Agent.
 
-```mermaid
-graph TD
-    User[User] -->|HTTPS| Frontend
-    
-    subgraph "Cloud Run Services"
-        Frontend[Frontend (React + Vite)]
-        Backend[Backend API (FastAPI)]
-        Agent[ADK Agent Service]
-        Toolbox[MCP Toolbox Service]
-    end
-    
-    subgraph "Infrastructure"
-        Proxy[AlloyDB Auth Proxy]
-        AlloyDB[(AlloyDB for PostgreSQL)]
-        VertexAI[Vertex AI (Gemini & Search)]
-    end
-
-    %% Frontend Interactions
-    Frontend -->|/api (Search)| Backend
-    Frontend -->|/agent (Chat)| Agent
-    
-    %% Backend Interactions
-    Backend -->|SQL / pgvector| Proxy
-    Backend -->|Embeddings / Search| VertexAI
-        
-    %% Toolbox Interactions
-    Toolbox -->|SQL (Tools)| Proxy
-    
-    %% Agent Interactions
-    Agent -->|Model Context Protocol| Toolbox
-    Agent -->|Generate Content (Gemini 2.5)| VertexAI
-
-    %% Infrastructure Connections
-    Proxy -->|Secure Tunnel| AlloyDB
-```
+![Architecture Diagram](assets/architecture_diagram.png)
 
 ### User Interface
 The interface is designed to be intuitive, offering four distinct search modes to cater to different user needs.
