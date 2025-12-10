@@ -41,7 +41,8 @@ resource "google_project_iam_member" "sa_roles" {
     "roles/aiplatform.user",
 
     "roles/storage.objectAdmin",
-    "roles/datastore.user" # Often needed for Vertex AI Search if using Datastore mode, but here it's likely Discovery Engine
+    "roles/datastore.user", # Often needed for Vertex AI Search if using Datastore mode, but here it's likely Discovery Engine
+    "roles/secretmanager.secretAccessor"
   ])
 
   project = google_project.project.project_id

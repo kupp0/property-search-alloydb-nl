@@ -2,7 +2,7 @@ resource "google_alloydb_cluster" "default" {
   cluster_id = var.alloydb_cluster_id
   location   = var.region
   project    = google_project.project.project_id
-  
+
   database_version = "POSTGRES_16"
 
   network_config {
@@ -18,10 +18,10 @@ resource "google_alloydb_cluster" "default" {
 }
 
 resource "google_alloydb_instance" "primary" {
-  provider      = google-beta
-  cluster       = google_alloydb_cluster.default.name
-  instance_id   = var.alloydb_instance_id
-  instance_type = "PRIMARY"
+  provider          = google-beta
+  cluster           = google_alloydb_cluster.default.name
+  instance_id       = var.alloydb_instance_id
+  instance_type     = "PRIMARY"
   availability_type = "ZONAL"
 
   machine_config {
@@ -29,21 +29,21 @@ resource "google_alloydb_instance" "primary" {
   }
 
   database_flags = {
-    "alloydb_ai_nl.enabled"                          = "on"
-    "google_ml_integration.enable_ai_query_engine"   = "on"
-    "scann.enable_zero_knob_index_creation"          = "on"
-    "password.enforce_complexity"                    = "on"
-    "google_db_advisor.enable_auto_advisor"          = "on"
-    "google_db_advisor.auto_advisor_schedule"        = "EVERY 24 HOURS"
-    "parameterized_views.enabled"                    = "on"
+    "alloydb_ai_nl.enabled"                        = "on"
+    "google_ml_integration.enable_ai_query_engine" = "on"
+    "scann.enable_zero_knob_index_creation"        = "on"
+    "password.enforce_complexity"                  = "on"
+    "google_db_advisor.enable_auto_advisor"        = "on"
+    "google_db_advisor.auto_advisor_schedule"      = "EVERY 24 HOURS"
+    "parameterized_views.enabled"                  = "on"
   }
 
   observability_config {
-    enabled                       = true
-    max_query_string_length       = 10240
-    track_wait_event_types        = true
-    track_wait_events             = true
-    query_plans_per_minute        = 20
+    enabled                 = true
+    max_query_string_length = 10240
+    track_wait_event_types  = true
+    track_wait_events       = true
+    query_plans_per_minute  = 20
     # assistive_experiences_enabled = true # Uncomment if Gemini Cloud Assist is enabled
   }
 }

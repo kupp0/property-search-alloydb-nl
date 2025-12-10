@@ -14,6 +14,4 @@ output "bastion_ssh_command" {
   value = "gcloud compute ssh ${google_compute_instance.bastion.name} --zone ${var.zone} --tunnel-through-iap"
 }
 
-output "toolbox_url" {
-  value = google_cloud_run_v2_service.toolbox.uri
-}
+
