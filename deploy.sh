@@ -188,7 +188,7 @@ gcloud run services replace backend/service.resolved.yaml --region $REGION --pro
 # Allow current user access (Org Policy restricts allUsers)
 gcloud run services add-iam-policy-binding $BACKEND_SERVICE_NAME \
     --region $REGION \
-    --member="user:$CURRENT_USER" \
+    --member="allUsers" \
     --role="roles/run.invoker"
 
 # Get Backend URL
@@ -212,7 +212,7 @@ gcloud run services replace backend/mcp_server/service.resolved.yaml --region $R
 # Allow current user access
 gcloud run services add-iam-policy-binding $TOOLBOX_SERVICE_NAME \
     --region $REGION \
-    --member="user:$CURRENT_USER" \
+    --member="allUsers" \
     --role="roles/run.invoker"
 
 TOOLBOX_URL=$(gcloud run services describe $TOOLBOX_SERVICE_NAME --platform managed --region $REGION --format 'value(status.url)')
@@ -233,7 +233,7 @@ gcloud run services replace backend/agent/service.resolved.yaml --region $REGION
 
 gcloud run services add-iam-policy-binding $AGENT_SERVICE_NAME \
     --region $REGION \
-    --member="user:$CURRENT_USER" \
+    --member="allUsers" \
     --role="roles/run.invoker"
 
 AGENT_URL=$(gcloud run services describe $AGENT_SERVICE_NAME --platform managed --region $REGION --format 'value(status.url)')
@@ -251,7 +251,7 @@ gcloud run deploy $FRONTEND_SERVICE_NAME \
     --region $REGION \
     --platform managed \
     --project=$PROJECT_ID \
-    --no-allow-unauthenticated \
+    --allow-unauthenticated \
     --set-env-vars BACKEND_URL=$BACKEND_URL,AGENT_URL=$AGENT_URL
 
 # Get Frontend URL
