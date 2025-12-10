@@ -73,6 +73,7 @@ The identity running the Cloud Run service is now a **Dedicated Service Account*
 * `roles/serviceusage.serviceUsageConsumer`: To consume Google Cloud APIs.
 * `roles/aiplatform.user`: To use Vertex AI Embeddings.
 * `roles/datastore.user`: For Vertex AI Search data access.
+* `roles/secretmanager.secretAccessor`: To access secrets (e.g. for Toolbox).
 
 
 ### Connectivity & AlloyDB Auth Proxy
@@ -123,24 +124,27 @@ To enable Visual Search, you need to populate the database with images and embed
 2.  **Run the Bootstrap Script**:
     This script generates AI images for each listing, uploads them to GCS, calculates embeddings, and updates the database.
     ```bash
-    # 1. Create a virtual environment
+    # 1. Navigate to the artifacts directory
+    cd "alloydb artefacts"
+
+    # 2. Create and activate a virtual environment
     python3 -m venv venv
     source venv/bin/activate
     
-    # 2. Install dependencies
-    pip install -r backend/requirements.txt
+    # 3. Install dependencies
+    pip install -r requirements.txt
     
-    # 3. Start AlloyDB Auth Proxy (via Bastion Tunnel)
-    # The bootstrap script expects a local connection.
-    # Use the debug_local.sh script's logic or manually tunnel:
-    gcloud compute ssh search-demo-bastion --zone <REGION>-b -- -L 5432:127.0.0.1:5432
-    # (Then run the proxy on the bastion or tunnel the proxy port)
+    # 4. Set Quota Project for ADC (Required for Vertex AI)
+    gcloud auth application-default set-quota-project <YOUR_PROJECT_ID>
     
-    # EASIER: Just run ./debug_local.sh in one terminal to set up the tunnel, 
-    # then run the bootstrap script in another.
+    # 5. Start AlloyDB Auth Proxy (via Bastion Tunnel)
+    # Open a NEW terminal window and run:
+    gcloud compute ssh search-demo-bastion --zone <REGION>-b --command "./alloydb-auth-proxy \"<INSTANCE_CONNECTION_NAME>\" --address=127.0.0.1 --port=5432" -- -L 5432:127.0.0.1:5432
     
-    # 4. Run the script
-    python alloydb\ artefacts/bootstrap_images.py
+    # EASIER: Just run ./debug_local.sh in one terminal to set up the tunnel.
+    
+    # 6. Run the script (in the original terminal)
+    python bootstrap_images.py
     ```
     *Note: This script assumes the AlloyDB Auth Proxy is running on `localhost:5432`.*
 

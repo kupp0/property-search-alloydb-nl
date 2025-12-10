@@ -77,3 +77,30 @@ resource "google_service_networking_connection" "private_vpc_connection" {
   reserved_peering_ranges = [google_compute_global_address.private_ip_address.name]
   depends_on              = [google_project_service.services]
 }
+
+resource "google_compute_firewall" "allow_internal" {
+  name    = "allow-internal"
+  network = google_compute_network.vpc_network.name
+  project = google_project.project.project_id
+
+  allow {
+    protocol = "tcp"
+  }
+  allow {
+    protocol = "udp"
+  }
+  allow {
+    protocol = "icmp"
+  }
+
+  source_ranges = ["10.0.0.0/8"]
+}
+
+resource "google_compute_subnetwork" "subnet" {
+  name                     = "search-demo-vpc"
+  region                   = var.region
+  network                  = google_compute_network.vpc_network.id
+  project                  = google_project.project.project_id
+  ip_cidr_range            = "10.132.0.0/20" # europe-west1 auto-mode range
+  private_ip_google_access = true
+}
