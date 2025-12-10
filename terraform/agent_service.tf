@@ -2,6 +2,7 @@
 resource "google_cloud_run_v2_service" "agent_service" {
   name     = "adk-agent-service"
   location = var.region
+  project  = google_project.project.project_id
   ingress  = "INGRESS_TRAFFIC_ALL"
 
   template {
@@ -37,7 +38,7 @@ resource "google_cloud_run_v2_service" "agent_service" {
       }
     }
     
-    service_account = google_service_account.run_sa.email
+    service_account = google_service_account.backend_sa.email
   }
 
   depends_on = [
