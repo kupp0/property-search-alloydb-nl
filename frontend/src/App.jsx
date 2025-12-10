@@ -70,7 +70,7 @@ function App() {
                     <div className="p-8">
                         <div className="flex flex-col xl:flex-row justify-between items-center mb-6 gap-4">
                                 <h2 className="text-2xl font-bold text-slate-900 dark:text-white whitespace-nowrap flex items-center">
-                                    Property Search <span className="text-xs font-normal text-slate-400 border border-slate-200 dark:border-slate-700 px-2 py-0.5 rounded-full ml-2">BETA</span>
+                                    Swiss Property Search 🇨🇭 <span className="text-xs font-normal text-slate-400 border border-slate-200 dark:border-slate-700 px-2 py-0.5 rounded-full ml-2">BETA</span>
                                     <button onClick={() => setShowArchitecture(true)} className="ml-2 px-3 py-1 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors text-sm font-medium flex items-center gap-2">
                                         <Workflow className="w-4 h-4" /> Architecture
                                     </button>
