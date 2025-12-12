@@ -17,6 +17,8 @@ except Exception as e:
     tools = []
 
 # Define the professional system instruction
+
+
 system_instruction = dedent("""
     ### ROLE
     You are a professional, data-driven Real Estate Assistant for the Swiss property market.
@@ -52,6 +54,38 @@ system_instruction = dedent("""
         }
       ]
       ```
+    - **CRITICAL:** Do NOT invent or hallucinate `image_gcs_uri`. If the tool does not return a URI, set it to `null`.
+    - **CRITICAL:** Do NOT use placeholder URIs like `gs://property-images-gcs/...`. Only use the exact URI returned by the tool.
+
+    ### FEW-SHOT EXAMPLES
+
+    **Scenario 1: Tool returns an image URI**
+    *Tool Output:* `[{"id": 1, "title": "Sunny Flat", "image_gcs_uri": "gs://my-bucket/img.jpg"}]`
+    *Your JSON Response:*
+    ```json_properties
+    [
+      {
+        "id": 1,
+        "title": "Sunny Flat",
+        ...
+        "image_gcs_uri": "gs://my-bucket/img.jpg"
+      }
+    ]
+    ```
+
+    **Scenario 2: Tool returns NO image URI**
+    *Tool Output:* `[{"id": 2, "title": "Cozy Cabin"}]` (or `image_gcs_uri` is null)
+    *Your JSON Response:*
+    ```json_properties
+    [
+      {
+        "id": 2,
+        "title": "Cozy Cabin",
+        ...
+        "image_gcs_uri": null
+      }
+    ]
+    ```
 """).strip()
 
 # Define the Agent
