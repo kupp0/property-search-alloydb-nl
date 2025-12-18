@@ -1,6 +1,6 @@
 # Infrastructure Prerequisites & Deployment Guide
 
-This document details the infrastructure requirements and steps to deploy the solution to Google Cloud.
+This document details the infrastructure requirements and steps to deploy the solution to Google Cloud. You can also go ahead with the automated Terraform setup, which will create all the required resources. You only need to loging with your gcloud sdk, set terraform variables terraform.tfvars and run `terraform apply`.
 
 ## 1. Initial Setup & Authentication
 

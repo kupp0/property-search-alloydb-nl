@@ -52,7 +52,6 @@ The interface is designed to be intuitive, offering four distinct search modes t
 #### Tools
 * **Google Cloud SDK (`gcloud`)**: Installed and authenticated.
 * **Docker**: Installed (for local debugging and building).
-* **Git**: For version control.
 
 ### Setup Options
 
