@@ -22,9 +22,8 @@ It showcases four distinct search methodologies enabled by moving AI logic close
 | Mode | User Intent | Technology Stack | How it Works |
 | :--- | :--- | :--- | :--- |
 | **NL2SQL (Generative SQL)** | "I have specific, complex criteria." | **AlloyDB AI** (`alloydb_ai_nl` extension) | Converts natural language queries (e.g., "3-bed in Geneva under 6k") directly into a precise SQL `WHERE` clause inside the database. |
-| **Semantic Search** | "I'm searching by concept or vibe." | **AlloyDB** (`pgvector`) + **Vertex AI** (Text Embeddings) | Converts user query into a vector, finding property descriptions with the closest semantic meaning, matching concepts over keywords. |
-| **Visual Search** | "I know the look I want." | **AlloyDB** (`pgvector`) + **Vertex AI** (Multimodal Embeddings) | Converts user text into a "visual vector" and searches against vectors generated from property images, finding aesthetic matches. |
-| **Managed Search** | "I want Google-quality search." | **Vertex AI Search** (Agent Builder) | A fully managed "Search as a Service" that ingests data and provides a pre-tuned API with ranking, typo-tolerance, and hybrid search out-of-the-box. |
+| **Multimodal Semantic Search** | "I'm searching by concept, vibe, or look." | **AlloyDB** (`pgvector`) + **Vertex AI** (Text & Multimodal Embeddings) | Uses **Text Embeddings** to find properties by semantic meaning and **Multimodal Embeddings** for visual search to match aesthetic preferences. |
+| **Managed Search** | "I want Google-quality search." | **Vertex AI Search** | A fully managed "Search as a Service" that ingests data and provides a pre-tuned API with ranking, typo-tolerance, and hybrid search out-of-the-box. |
 
 ## Architecture Overview
 
