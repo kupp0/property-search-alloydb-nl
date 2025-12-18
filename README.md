@@ -54,157 +54,58 @@ The interface is designed to be intuitive, offering four distinct search modes t
 * **Docker**: Installed (for local debugging and building).
 * **Git**: For version control.
 
-#### IAM Permissions
-To successfully deploy and run this application, specific IAM roles are required for both the **User (Deployer)** and the **Cloud Run Service Account**.
+### Setup Options
 
-**1. User (Deployer) Permissions:**
-You need these permissions to build images and deploy services:
-* `roles/owner` OR `roles/editor` (Broad access)
-* OR specifically:
-    * `roles/artifactregistry.writer` (To push Docker images)
-    * `roles/run.admin` (To deploy Cloud Run services)
-    * `roles/iam.serviceAccountUser` (To act as the service account)
+You can choose between two methods to set up the infrastructure:
 
-**2. Cloud Run Service Account Permissions:**
-The identity running the Cloud Run service is now a **Dedicated Service Account** (`search-backend-sa`), not the default Compute SA. It needs:
-* `roles/alloydb.client`: To connect to AlloyDB.
-* `roles/discoveryengine.editor`: To query Vertex AI Search.
-* `roles/logging.logWriter`: To write logs to Cloud Logging.
-* `roles/serviceusage.serviceUsageConsumer`: To consume Google Cloud APIs.
-* `roles/aiplatform.user`: To use Vertex AI Embeddings.
-* `roles/datastore.user`: For Vertex AI Search data access.
-* `roles/secretmanager.secretAccessor`: To access secrets (e.g. for Toolbox).
+#### Option 1: Fully Automated (Terraform)
+Use Terraform to automatically provision all required resources (Project, AlloyDB, Vertex AI, GCS, IAM).
 
-
-### Connectivity & AlloyDB Auth Proxy
-This application uses the **AlloyDB Auth Proxy** pattern to securely connect to the database.
-
-#### Private IP (Default)
-The AlloyDB instance is configured with **Private IP only** for enhanced security.
-* **Cloud Run**: Connects via **Direct VPC Egress** to the `search-demo-vpc`.
-* **Local Debugging**: Uses a **Bastion Host** (`search-demo-bastion`) to tunnel connections to the private database.
-
-
-### Database & AI Setup
-
-#### 1. AlloyDB Setup
-You must provision an AlloyDB for PostgreSQL instance and run the provided initialization scripts to create the schema and enable extensions.
-
-1.  **Create AlloyDB Cluster & Instance**: Ensure it is in the same region as your Cloud Run services.
-2.  **Run SQL Scripts**: Connect to your instance (e.g., via AlloyDB Studio or `psql` through the proxy) and execute the scripts in `alloydb artefacts/`:
-    *   `alloydb_setup.sql`: Creates the `search` schema, tables, and enables `pgvector`.
-    *   `alloydb_ai_nl_setup.sql`: Configures the `alloydb_ai_nl` extension for Natural Language to SQL.
-    
-    ![AlloyDB AI NL Architecture](assets/alloydb_ai_nl_architecture.png)
-    
-    **Alternative: Terraform Setup (Recommended)**
-    You can provision the entire infrastructure (Project, AlloyDB, Vertex AI, GCS, IAM) using Terraform.
-    
-    1.  Navigate to `terraform/`:
-        ```bash
-        cd terraform
-        ```
-    2.  Create `terraform.tfvars` with your project details (see `terraform.tfvars.example`).
-    3.  Run Terraform:
-        ```bash
-        terraform init
-        terraform apply
-        ```
-    4.  Generate `.env` file:
-        ```bash
-        ./generate_env.sh
-        ```
-
-#### 2. Visual Search Setup (Optional)
-To enable Visual Search, you need to populate the database with images and embeddings. We provide a bootstrap script for this.
-
-1.  **Prerequisites**:
-    *   A Google Cloud Storage bucket to store generated images.
-    *   Vertex AI Vision API enabled.
-2.  **Run the Bootstrap Script**:
-    This script generates AI images for each listing, uploads them to GCS, calculates embeddings, and updates the database.
+1.  Navigate to the `terraform/` directory:
     ```bash
-    # 1. Navigate to the artifacts directory
-    cd "alloydb artefacts"
-
-    # 2. Create and activate a virtual environment
-    python3 -m venv venv
-    source venv/bin/activate
-    
-    # 3. Install dependencies
-    pip install -r requirements.txt
-    
-    # 4. Set Quota Project for ADC (Required for Vertex AI)
-    gcloud auth application-default set-quota-project <YOUR_PROJECT_ID>
-    
-    # 5. Start AlloyDB Auth Proxy (via Bastion Tunnel)
-    # Open a NEW terminal window and run:
-    gcloud compute ssh search-demo-bastion --zone <REGION>-b --command "./alloydb-auth-proxy \"<INSTANCE_CONNECTION_NAME>\" --address=127.0.0.1 --port=5432" -- -L 5432:127.0.0.1:5432
-    
-    # EASIER: Just run ./debug_local.sh in one terminal to set up the tunnel.
-    
-    # 6. Run the script (in the original terminal)
-    python bootstrap_images.py
+    cd terraform
     ```
-    *Note: This script assumes the AlloyDB Auth Proxy is running on `localhost:5432`.*
+2.  Follow the detailed instructions in the **[Terraform README](terraform/README.md)**.
+3.  **Summary of steps**:
+    *   Create `terraform.tfvars` with your project details.
+    *   Run `terraform init` and `terraform apply`.
+    *   Run `./generate_env.sh` to create the backend configuration.
 
+#### Option 2: Manual Setup / Existing Resources
+If you are using an existing project or prefer to set up resources manually, ensure you meet all requirements first.
 
-#### 3. Vertex AI Search Setup
-For the "Managed Search" mode, you must set up a Vertex AI Search app.
-
-1.  **Enable API**: Enable "Vertex AI Search and Conversation API".
-2.  **Create App**: Create a new "Search" app in "Generic" mode.
-    *   **Region**: Must be **Global**. Regional apps (e.g., `us`, `eu`) are not supported by this demo's default configuration.
-3.  **Create Data Store**:
-    *   Source: **AlloyDB for PostgreSQL** (Preview).
-    *   Select your AlloyDB table (`search.property_listings`).
-    *   **IMPORTANT**: Ensure all columns (title, description, price, city, etc.) are set to **Retrievable** and **Searchable** in the schema mapping configuration.
-4.  **Link Data Store**: Connect the data store to your Search App.
-5.  **Update Config**: Set the `VERTEX_SEARCH_DATA_STORE_ID` environment variable in `backend/service.yaml` and `.env` to your Data Store ID.
-
-## Setup
-
-> [!IMPORTANT]
-> **Before you begin:** Please review the [Infrastructure Prerequisites](infrastructure_prerequisites.md) to ensure your Google Cloud environment (AlloyDB, IAM, etc.) is correctly configured.
-
-1.  **Environment Configuration**:
-    Copy the example environment file and update it with your configuration:
+1.  **Review Prerequisites**: Read the **[Infrastructure Prerequisites](infrastructure_prerequisites.md)** guide to ensure your project, network, and AlloyDB instance are correctly configured.
+2.  **Login**:
+    ```bash
+    gcloud auth login
+    gcloud config set project YOUR_PROJECT_ID
+    ```
+3.  **Configure Environment**:
+    Run the setup script to generate your local configuration file (`backend/.env`):
     ```bash
     ./setup_env.sh
     ```
-    This script will prompt you for your Google Cloud Project ID, Region, AlloyDB details, and Vertex AI Search Data Store ID. It will generate a `backend/.env` file.
+4.  **Database Initialization**:
+    If you haven't already, run the SQL scripts in `alloydb artefacts/` to set up the schema and AI extensions.
+    *   `alloydb_setup.sql`
+    *   `alloydb_ai_nl_setup.sql`
 
-    Ensure all values are correct. You can use `example.env` as a reference.
+### Deployment
 
-### Local Debugging (Containerized)
-To run the application locally in Docker containers (mimicking the Cloud Run environment):
+Once your environment is configured (via Option 1 or Option 2):
 
-```bash
-./debug_local.sh
-```
-This will:
-1. SSH into the **Bastion Host**.
-2. Start the **AlloyDB Auth Proxy** on the Bastion.
-3. Tunnel the connection to your local machine (`localhost:5432`).
-4. Build and run the **Backend container** (connected to the tunnel).
-5. Build and run the **Toolbox container** (connected to the tunnel).
-6. Build and run the **Agent container** (connected to Toolbox).
-7. Build and run the **Frontend container** (connected to Backend and Agent).
-8. Access the app at `http://localhost:8081`.
+1.  **Local Debugging** (Optional):
+    ```bash
+    ./debug_local.sh
+    ```
+    This mimics the Cloud Run environment locally using Docker and a Bastion host tunnel.
 
+2.  **Deploy to Cloud Run**:
+    ```bash
+    ./deploy.sh
+    ```
+    This will build and deploy all services (Backend, Frontend, Agent, Toolbox) to Google Cloud Run.
 
-### Deployment to Cloud Run
-To deploy the full stack to Google Cloud Run:
-
-```bash
-./deploy.sh
-```
-This script will:
-1. Check for necessary IAM permissions.
-2. Build Docker images and push them to Artifact Registry.
-3. Deploy the **Backend service** (with AlloyDB Auth Proxy sidecar).
-4. Deploy the **Frontend service** (configured to talk to the Backend).
-5. Output the public URLs for both services.
 
 ## Repository Structure
 * `backend/`: FastAPI application and Dockerfile.
