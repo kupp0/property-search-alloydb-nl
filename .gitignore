@@ -1,0 +1,35 @@
+# Ignore dependencies
+node_modules/
+venv/
+__pycache__/
+
+# Ignore build artifacts
+dist/
+*.log
+
+# Ignore environment secrets 
+.env
+backend/.env
+.DS_Store
+backend/venv/
+
+# Local AlloyDB Auth Proxy binary
+alloydb-auth-proxy
+
+# Terraform
+.terraform/
+*.tfstate
+*.tfstate.backup
+*.tfvars
+.terraform.lock.hcl
+
+# Python
+get-pip.py
+backend/service.resolved.yaml
+*venv
+
+# Temporary Files
+temp_*.png
+temp_*.jpg
+*.jsonl
+toolbox

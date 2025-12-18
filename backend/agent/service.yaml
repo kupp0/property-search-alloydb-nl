@@ -1,0 +1,31 @@
+apiVersion: serving.knative.dev/v1
+kind: Service
+metadata:
+  name: search-agent
+  annotations:
+    run.googleapis.com/launch-stage: BETA
+spec:
+  template:
+    metadata:
+      annotations:
+        run.googleapis.com/execution-environment: gen2
+        run.googleapis.com/network-interfaces: '[{"network":"search-demo-vpc","subnetwork":"search-demo-vpc"}]'
+        run.googleapis.com/vpc-access-egress: private-ranges-only
+    spec:
+      serviceAccountName: ${SERVICE_ACCOUNT}
+      containers:
+      - name: agent
+        image: ${AGENT_IMAGE}
+        ports:
+        - containerPort: 8080
+        env:
+        - name: GOOGLE_CLOUD_PROJECT
+          value: "${PROJECT_ID}"
+        - name: GOOGLE_CLOUD_REGION
+          value: "${REGION}"
+        - name: GOOGLE_CLOUD_LOCATION
+          value: "${REGION}"
+        - name: GOOGLE_GENAI_USE_VERTEXAI
+          value: "true"
+        - name: TOOLBOX_URL
+          value: "${TOOLBOX_URL}"
