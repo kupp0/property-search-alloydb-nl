@@ -43,7 +43,7 @@ This application follows a modern, containerized microservices architecture desi
 ### User Interface
 The interface is designed to be intuitive, offering four distinct search modes to cater to different user needs.
 
-![AlloyDB AI Search UI](assets/ui_screenshot.png)
+![AlloyDB AI Search UI](assets/SwissPropertySearch.gif)
 
 ## Technical Architecture
 * **Frontend:** React + Vite (Containerized with Nginx)
