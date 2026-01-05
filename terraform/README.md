@@ -6,11 +6,17 @@ This directory contains Terraform scripts to automate the deployment of the Sear
 
 1.  **Terraform**: Ensure Terraform is installed (v1.0+).
     -   [Install Terraform](https://developer.hashicorp.com/terraform/install)
-2.  **Google Cloud SDK**: Ensure `gcloud` is installed and authenticated.
-    ```bash
-    gcloud auth application-default login
-    gcloud auth application-default set-quota-project <YOUR_PROJECT_ID>
-    ```
+
+2.  **Google Cloud SDK**: Ensure `gcloud` is installed and authenticated. 
+
+Terraform scripts include the project creation.Rename and add your input into terraform.tfvars file.
+
+Your gcloud login project needs billing account and service usage api enabled. If not you'll see error during tf apply.
+Check the following APIs that they are enabled in the project:
+A. https://console.cloud.google.com/apis/library/cloudbilling.googleapis.com
+B. https://console.developers.google.com/apis/api/serviceusage.googleapis.com
+
+
 3.  **Billing Account ID**: You need the ID of the billing account to associate with the new project.
     -   Find it via `gcloud beta billing accounts list`.
 
@@ -24,13 +30,14 @@ terraform init
 ```
 
 ### 2. Configure Variables
-Create a `terraform.tfvars` file to specify your project details. **Do not commit this file if it contains secrets.**
+Create a `terraform.tfvars` file to specify your project details. 
 
 **`terraform.tfvars` example:**
 ```hcl
 project_id         = "my-search-demo-project-123"
 billing_account_id = "000000-000000-000000"
 region             = "europe-west1"
+zone               = "europe-west1-b"
 db_password        = "StrongPassword123!" # Must meet complexity requirements
 ```
 
@@ -39,7 +46,7 @@ Run `terraform plan` to see what resources will be created.
 ```bash
 terraform plan
 ```
-*Review the output to ensure it matches your expectations (Project, AlloyDB Cluster, IAM bindings, etc.).*
+*Review the output to ensure it matches your expectations (Project, AlloyDB Cluster, IAM bindings, Regions, Zones, etc.).*
 
 ### 4. Apply the Configuration
 Run `terraform apply` to create the infrastructure.

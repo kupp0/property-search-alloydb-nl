@@ -44,7 +44,9 @@ resource "google_project_service" "services" {
     "cloudaicompanion.googleapis.com",
     "monitoring.googleapis.com",
     "cloudtrace.googleapis.com",
-    "secretmanager.googleapis.com"
+    "secretmanager.googleapis.com",
+    "cloudbilling.googleapis.com",
+    "serviceusage.googleapis.com"
   ])
 
   project = google_project.project.project_id
