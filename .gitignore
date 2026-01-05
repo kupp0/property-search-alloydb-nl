@@ -33,3 +33,5 @@ temp_*.png
 temp_*.jpg
 *.jsonl
 toolbox
+backend/agent/service.resolved.yaml
+backend/mcp_server/service.resolved.yaml

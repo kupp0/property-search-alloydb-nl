@@ -82,13 +82,15 @@ check_service_account_permissions() {
     echo "🔍 Checking Build Service Account permissions..."
     PROJECT_NUMBER=$(gcloud projects describe $PROJECT_ID --format="value(projectNumber)")
     # Cloud Build often uses the Compute Engine default service account by default in some configs,
-    # or the Cloud Build Service Account. The error message specifically mentioned the Compute SA.
-    # UPDATE: We are now using a dedicated SA: search-backend-sa
+    # or the Cloud Build Service Account.
+    # We are using a dedicated Service Account (search-backend-sa) for the runtime identity,
+    # but the build process itself might still use the default Compute SA or Cloud Build SA depending on configuration.
+    # The checks below ensure the runtime Service Account has all necessary permissions.
     COMPUTE_SA="search-backend-sa@${PROJECT_ID}.iam.gserviceaccount.com"
     echo "Checking Dedicated Service Account: $COMPUTE_SA"
 
-    echo "ℹ️  Note: Builds submitted via gcloud often use this Service Account."
-    echo "It needs 'roles/logging.logWriter', 'roles/artifactregistry.repoAdmin', 'roles/alloydb.client', 'roles/serviceusage.serviceUsageConsumer', 'roles/aiplatform.user', 'roles/discoveryengine.editor', 'roles/storage.objectAdmin', and 'roles/secretmanager.secretAccessor'."
+    echo "ℹ️  Note: This Service Account is used as the runtime identity for the Cloud Run services."
+    echo "It requires permissions for Logging, Artifact Registry, AlloyDB, Service Usage, Vertex AI, Discovery Engine, Storage, and Secret Manager."
     
     # Check if we can see the policy (heuristic)
     SA_ROLES=$(gcloud projects get-iam-policy $PROJECT_ID \
@@ -109,7 +111,10 @@ check_service_account_permissions() {
         echo "Current Roles:"
         echo "$SA_ROLES"
         echo ""
-        echo "To fix the 'Permission denied' errors, run:"
+        echo "To fix the 'Permission denied' errors, we recommend updating the infrastructure via Terraform:"
+        echo "cd terraform && terraform apply"
+        echo ""
+        echo "Alternatively, you can run the following commands manually (NOT RECOMMENDED for reproducibility):"
         echo "gcloud projects add-iam-policy-binding $PROJECT_ID \\"
         echo "    --member='serviceAccount:$COMPUTE_SA' \\"
         echo "    --role='roles/logging.logWriter'"
@@ -136,7 +141,6 @@ check_service_account_permissions() {
         echo "    --role='roles/secretmanager.secretAccessor'"
 
         echo ""
-        echo "You can copy and run the above commands manually."
         echo "Exiting to prevent build/runtime failure..."
         exit 1
     fi

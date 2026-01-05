@@ -62,3 +62,20 @@ resource "google_project_iam_member" "alloydb_sa_vertex_ai" {
   role    = "roles/aiplatform.user"
   member  = "serviceAccount:${google_project_service_identity.alloydb_sa.email}"
 }
+
+# Default Compute Engine Service Account Permissions
+# This service account is used by Cloud Build for:
+# 1. Staging source code to Cloud Storage (roles/storage.objectViewer)
+# 2. Pushing built images to Artifact Registry (roles/artifactregistry.repoAdmin)
+# 3. Writing build logs to Cloud Logging (roles/logging.logWriter)
+resource "google_project_iam_member" "default_compute_sa_roles" {
+  for_each = toset([
+    "roles/storage.objectViewer",
+    "roles/artifactregistry.repoAdmin",
+    "roles/logging.logWriter"
+  ])
+
+  project = google_project.project.project_id
+  role    = each.key
+  member  = "serviceAccount:${data.google_project.project.number}-compute@developer.gserviceaccount.com"
+}
