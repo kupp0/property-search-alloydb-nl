@@ -4,6 +4,9 @@ This project is a full-stack demonstration of how to build a modern, AI-powered 
 
 It showcases four distinct search methodologies enabled by moving AI logic closer to your data, allowing users to interact with a property listing database in intuitive and powerful ways.
 
+This is a prototype / demo sample application and not tailored for production use.
+
+
 ## Resources
 
 **📖 Read the Blog Post:** [GenAI Everywhere: Building a Full-Stack AI Search Demo](https://medium.com/@matthiaskupczak/genai-everywhere-building-a-full-stack-ai-search-demo-with-alloydb-vertex-ai-and-agentic-37eb38c3e646)
